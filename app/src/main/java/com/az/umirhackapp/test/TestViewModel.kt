@@ -1,0 +1,147 @@
+package com.az.umirhackapp.test
+
+import androidx.lifecycle.ViewModel
+import com.az.umirhackapp.server.Document
+import com.az.umirhackapp.server.DocumentItem
+import com.az.umirhackapp.server.Organization
+import com.az.umirhackapp.server.Product
+import com.az.umirhackapp.server.Warehouse
+import com.az.umirhackapp.server.inventory.InventoryUiState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
+class TestViewModel : ViewModel() {
+    // Для демонстрации без реального API
+
+    // Состояния UI
+    private val _uiState = MutableStateFlow(InventoryUiState())
+    val uiState: StateFlow<InventoryUiState> = _uiState
+
+    private val _scannedProduct = MutableStateFlow<Product?>(null)
+    val scannedProduct: StateFlow<Product?> = _scannedProduct
+
+    fun loadOrganizations() {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+        _uiState.value = _uiState.value.copy(
+            organizations = organizations,
+            selectedOrganization = organizations.firstOrNull()
+        )
+        _uiState.value = _uiState.value.copy(isLoading = false)
+    }
+    fun loadWarehouses(orgId: Int) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+        _uiState.value = _uiState.value.copy(
+            warehouses = getTestWarehousesByOrganization(orgId)
+        )
+        _uiState.value = _uiState.value.copy(isLoading = false)
+    }
+    fun scanProduct(barcode: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+
+        // ДЕБАГ: выводим что приходит и что ищем
+        println("=== SCAN DEBUG ===")
+        println("Ищем штрих-код: '$barcode'")
+        println("Длина: ${barcode.length}")
+        println("Коды символов: ${barcode.map { it.code }}")
+
+        val allBarcodes = products.mapNotNull { it.barcode }
+        println("Доступные штрих-коды: $allBarcodes")
+
+        // Поиск с очисткой
+        val cleanBarcode = barcode.trim()
+        println("Очищенный штрих-код: '$cleanBarcode'")
+
+        _scannedProduct.value = getTestProductByBarcode(cleanBarcode)
+        _uiState.value = _uiState.value.copy(error = null)
+        println("Найденный товар: ${_scannedProduct.value}")
+        _uiState.value = _uiState.value.copy(isLoading = false)
+    }
+
+    fun getTestProductByBarcode(barcode: String): Product? {
+        println("Поиск товара по штрих-коду: '$barcode'")
+
+        return products.find { product ->
+            val productBarcode = product.barcode
+            val isMatch = productBarcode == barcode
+
+            if (productBarcode != null) {
+                println("Сравниваем: '$productBarcode' == '$barcode' -> $isMatch")
+            }
+
+            isMatch
+        }
+    }
+    fun loadDocuments(orgId: Int, warehouseId: Int? = null) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+
+        _uiState.value = _uiState.value.copy(error = null, documents = getTestDocumentsByOrganization(orgId, warehouseId))
+
+        _uiState.value = _uiState.value.copy(isLoading = false)
+    }
+
+    fun updateDocumentItem(documentItem: DocumentItem, value: Double) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+        println("До: " + _uiState.value.selectDocument)
+        val document = _uiState.value.selectDocument
+        document?.items?.map { if (it == documentItem) it.copy(quantityActual = value) }
+        _uiState.value = _uiState.value.copy(
+            selectDocument = document
+        )
+
+        println("После: " + _uiState.value.selectDocument)
+
+        _uiState.value = _uiState.value.copy(isLoading = false)
+    }
+
+    fun loadDocumentItem(orgId: Int, warehouseId: Int? = null, documentId: Int) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+
+        _uiState.value = _uiState.value.copy(selectDocument = getTestDocument(orgId, warehouseId, documentId))
+
+        _uiState.value = _uiState.value.copy(isLoading = false)
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null, successMessage = null)
+    }
+
+    fun selectOrganization(organization: Organization) {
+        _uiState.value = _uiState.value.copy(selectedOrganization = organization)
+        loadWarehouses(organization.id)
+    }
+
+    fun selectWarehouse(warehouse: Warehouse) {
+        _uiState.value = _uiState.value.copy(selectedWarehouse = warehouse)
+        loadDocuments(
+            _uiState.value.selectedOrganization!!.id,
+            _uiState.value.selectedWarehouse!!.id
+        )
+    }
+
+    fun selectDocument(document: Document) {
+        _uiState.value = _uiState.value.copy(selectDocument = document)
+    }
+
+}
+
+fun getTestWarehousesByOrganization(organizationId: Int): List<Warehouse> {
+    return warehouses.filter { it.organizationId == organizationId }
+}
+
+fun getTestProductsByOrganization(organizationId: Int): List<Product> {
+    return products.filter { it.organizationId == organizationId }
+}
+
+fun getTestDocumentsByOrganization(organizationId: Int, warehouseId: Int?): List<Document> {
+    return documents.filter { it.organizationId == organizationId && it.warehouseId == warehouseId }
+}
+
+fun getTestProductByBarcode(barcode: String): Product? {
+    return products.find { it.barcode == barcode }
+}
+
+fun getTestDocument(organizationId: Int, warehouseId: Int?, documentId: Int): Document {
+    return documents.find {
+        it.organizationId == organizationId && it.warehouseId == warehouseId && it.id == documentId
+    }!!
+}
