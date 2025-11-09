@@ -1,1 +1,1 @@
-"# UMIRHack2025" 
+# UMIRHack2025 
