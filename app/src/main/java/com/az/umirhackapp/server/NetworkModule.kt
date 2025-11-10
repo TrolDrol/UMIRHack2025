@@ -8,7 +8,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object NetworkModule {
-    private const val BASE_URL = "https://your-api-server.com/api/" // Замените на ваш URL
+    // TODO("Заменить на настоящий")
+    private const val BASE_URL = "https://url"
 
     private val gson = GsonBuilder()
         .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
