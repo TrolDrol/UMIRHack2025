@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -122,17 +123,7 @@ fun MainScreen(
             }
         },
         floatingActionButton = {
-            IconButton(
-                onClick = onQRScannerClick,
-                content = {
-                    Icon(
-                        Icons.Default.QrCodeScanner,
-                        contentDescription = "QR code Scanner",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                modifier = Modifier.size(56.dp)
-            )
+            ScanFloatingActionButton(onQRScannerClick)
         }
     ) { paddingValues ->
         Column(
@@ -461,6 +452,20 @@ fun SearchBar(
                     }
                 }
             }
+        )
+    }
+}
+
+// Плавающая кнопка сканирования
+@Composable
+fun ScanFloatingActionButton(onQRScannerClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = onQRScannerClick,
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Icon(
+            Icons.Default.QrCodeScanner,
+            contentDescription = "Сканировать штрих-код"
         )
     }
 }
