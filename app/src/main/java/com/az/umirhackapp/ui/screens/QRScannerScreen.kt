@@ -1,6 +1,7 @@
 package com.az.umirhackapp.ui.screens
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,12 +23,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.UiComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -71,53 +74,14 @@ fun ScannerContent(
     onBackClick: () -> Unit,
     onCodeScanned: (String) -> Unit
 ) {
-    val context = LocalContext.current
-    var lastScannedCode by remember { mutableStateOf("") }
-    var scanEnabled by remember { mutableStateOf(true) }
-
-    // Референс на BarcodeView для управления сканером
-    val barcodeView = remember { DecoratedBarcodeView(context) }
-    barcodeView.decoderFactory.apply {
-        DefaultDecoderFactory(
-            listOf(
-                BarcodeFormat.QR_CODE,
-                BarcodeFormat.CODE_128,
-                BarcodeFormat.CODE_39,
-                BarcodeFormat.EAN_13,
-                BarcodeFormat.EAN_8,
-                BarcodeFormat.UPC_A,
-                BarcodeFormat.UPC_E
-            )
-        )
-    }
-    barcodeView.setStatusText("")
-    barcodeView
-
+    var lastScannedCode = remember { mutableStateOf("") }
+    val barcodeView = createDecoratedBarcodeView(LocalContext.current)
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Камера для сканирования
-        AndroidView(
-            factory = { context ->
-                barcodeView.apply {
-                    // Обработка сканированных кодов
-                    decodeContinuous { result ->
-                        result?.text?.let { scannedText ->
-                            if (scanEnabled) {
-                                lastScannedCode = scannedText
-                                scanEnabled = false
-
-                                // Вызываем колбэк с отсканированным кодом
-                                onCodeScanned(scannedText)
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    delay(2000)
-                                    scanEnabled = true
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxSize()
+        CameraScanner(
+            barcodeView,
+            lastScannedCode,
+            onCodeScanned
         )
         TopBarQRScanner(
             onBackClick,
@@ -125,7 +89,7 @@ fun ScannerContent(
         )
         BottomBarQRScanner(
             barcodeView,
-            lastScannedCode,
+            lastScannedCode.value,
             Modifier.align(Alignment.BottomCenter)
         )
     }
@@ -235,10 +199,69 @@ fun BottomBarQRScanner(
 }
 
 // Функция для управления фонариком
-private fun toggleTorch(barcodeView: BarcodeView, enable: Boolean) {
+fun toggleTorch(barcodeView: BarcodeView, enable: Boolean) {
     try {
         barcodeView.setTorch(enable)
     } catch (e: Exception) {
         e.printStackTrace()
     }
+}
+
+@Composable
+@UiComposable
+fun CameraScanner(
+    barcodeView: DecoratedBarcodeView,
+    lastScannedCode: MutableState<String>,
+    onCodeScanned: (String) -> Unit
+) {
+    var scanEnabled by remember { mutableStateOf(true) }
+
+    // Камера для сканирования
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            factory = { context ->
+                barcodeView.apply {
+                    // Обработка сканированных кодов
+                    decodeContinuous { result ->
+                        result?.text?.let { scannedText ->
+                            if (scanEnabled) {
+                                lastScannedCode.value = scannedText
+                                scanEnabled = false
+
+                                // Вызываем колбэк с отсканированным кодом
+                                onCodeScanned(scannedText)
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    delay(2000)
+                                    scanEnabled = true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+// Референс на BarcodeView для управления сканером
+@Composable
+fun createDecoratedBarcodeView(context: Context): DecoratedBarcodeView {
+
+    val barcodeView = DecoratedBarcodeView(context)
+    barcodeView.decoderFactory.apply {
+        DefaultDecoderFactory(
+            listOf(
+                BarcodeFormat.QR_CODE,
+                BarcodeFormat.CODE_128,
+                BarcodeFormat.CODE_39,
+                BarcodeFormat.EAN_13,
+                BarcodeFormat.EAN_8,
+                BarcodeFormat.UPC_A,
+                BarcodeFormat.UPC_E
+            )
+        )
+    }
+    barcodeView.setStatusText("")
+    return barcodeView
 }

@@ -35,42 +35,21 @@ class TestViewModel : ViewModel() {
         )
         _uiState.value = _uiState.value.copy(isLoading = false)
     }
-    fun scanProduct(barcode: String) {
+    fun scanProduct(barcode: String): Boolean {
         _uiState.value = _uiState.value.copy(isLoading = true)
-
-        // ДЕБАГ: выводим что приходит и что ищем
-        println("=== SCAN DEBUG ===")
-        println("Ищем штрих-код: '$barcode'")
-        println("Длина: ${barcode.length}")
-        println("Коды символов: ${barcode.map { it.code }}")
-
-        val allBarcodes = products.mapNotNull { it.barcode }
-        println("Доступные штрих-коды: $allBarcodes")
+        _scannedProduct.value = null
 
         // Поиск с очисткой
         val cleanBarcode = barcode.trim()
-        println("Очищенный штрих-код: '$cleanBarcode'")
+        val foundProduct = products.find { it.barcode == cleanBarcode }
+        _scannedProduct.value = foundProduct
 
-        _scannedProduct.value = getTestProductByBarcode(cleanBarcode)
         _uiState.value = _uiState.value.copy(error = null)
-        println("Найденный товар: ${_scannedProduct.value}")
         _uiState.value = _uiState.value.copy(isLoading = false)
+
+        return _scannedProduct.value == null
     }
 
-    fun getTestProductByBarcode(barcode: String): Product? {
-        println("Поиск товара по штрих-коду: '$barcode'")
-
-        return products.find { product ->
-            val productBarcode = product.barcode
-            val isMatch = productBarcode == barcode
-
-            if (productBarcode != null) {
-                println("Сравниваем: '$productBarcode' == '$barcode' -> $isMatch")
-            }
-
-            isMatch
-        }
-    }
     fun loadDocuments(orgId: Int, warehouseId: Int? = null) {
         _uiState.value = _uiState.value.copy(isLoading = true)
 
@@ -89,6 +68,23 @@ class TestViewModel : ViewModel() {
         )
 
         println("После: " + _uiState.value.selectDocument)
+
+        _uiState.value = _uiState.value.copy(isLoading = false)
+    }
+
+    fun addNewDocumentItem(item: DocumentItem) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+
+        val newItemList = _uiState.value.selectDocument!!.items.toMutableList()
+
+        val itemWithId = item.copy(id = documentItems.size + 1)
+        newItemList.add(itemWithId)
+
+        val newList = documentItems.toMutableList()
+        newList.add(itemWithId)
+        documentItems = newList
+
+        _uiState.value.selectDocument?.items = newItemList
 
         _uiState.value = _uiState.value.copy(isLoading = false)
     }
@@ -120,6 +116,10 @@ class TestViewModel : ViewModel() {
 
     fun selectDocument(document: Document) {
         _uiState.value = _uiState.value.copy(selectDocument = document)
+    }
+
+    fun clearScannedProduct() {
+        _scannedProduct.value = null
     }
 
 }

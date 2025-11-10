@@ -63,7 +63,7 @@ data class Document(
     val warehouseId: Int,
     val createdById: Int,
     val warehouse: Warehouse? = null,
-    val items: MutableList<DocumentItem> = mutableListOf()
+    var items: List<DocumentItem> = listOf()
 )
 
 data class DocumentItem(
@@ -71,8 +71,8 @@ data class DocumentItem(
     val documentId: Int,
     val productId: Int,
     val quantityExpected: Double,
-    val quantityActual: Double,
-    val product: Product? = null
+    var quantityActual: Double,
+    var product: Product? = null
 )
 
 data class AddProductRequest(

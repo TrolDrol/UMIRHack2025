@@ -327,7 +327,7 @@ val documents = listOf(
     )
 )
 
-val documentItems = listOf(
+var documentItems = listOf(
     DocumentItem(
         id = 1,
         documentId = 1,

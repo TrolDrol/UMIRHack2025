@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,7 +29,6 @@ import com.az.umirhackapp.server.inventory.InventoryRepository
 import com.az.umirhackapp.server.inventory.InventoryViewModel
 import com.az.umirhackapp.test.TestViewModel
 import com.az.umirhackapp.ui.Screen
-import com.az.umirhackapp.ui.screens.DocumentItemsScreen
 import com.az.umirhackapp.ui.screens.LazyColumnItems
 import com.az.umirhackapp.ui.screens.LoadingScreen
 import com.az.umirhackapp.ui.screens.LoginScreen
@@ -40,6 +38,7 @@ import com.az.umirhackapp.ui.screens.ProfileScreen
 import com.az.umirhackapp.ui.screens.QRScannerScreen
 import com.az.umirhackapp.ui.screens.RegistrationScreen
 import com.az.umirhackapp.ui.screens.SettingsScreen
+import com.az.umirhackapp.ui.screens.document_items.DocumentItemsScreen
 import com.az.umirhackapp.ui.theme.AppTheme
 
 class MainActivity : ComponentActivity() {
@@ -257,15 +256,10 @@ fun AppNavigation() {
             DocumentItemsScreen(
                 viewModel = testViewModel,
                 selectedDocument = testViewModel.uiState.collectAsState().value.selectDocument!!,
-                documentItems = testViewModel.uiState.collectAsState().value.selectDocument!!.items,
                 onBackClick = { navController.popBackStack() },
-                onQRScannerClick = { navController.navigate(Screen.QR_SCANNER.route) },
+                onNotPermissionCamera = { navController.navigate(Screen.PERMISSION_REQUEST.route) },
                 onCancelDocument = {  },
-                onUpdateQuantity = {documentItem, value ->
-                    println("$documentItem $value")
-                    testViewModel.updateDocumentItem(documentItem, value)
-                },
-                onCompleteDocument = {  }
+                onCompleteDocument = { navController.popBackStack() }
             )
         }
 
