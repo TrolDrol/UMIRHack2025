@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.UiComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -76,11 +75,13 @@ fun ScannerContent(
 ) {
     var lastScannedCode = remember { mutableStateOf("") }
     val barcodeView = createDecoratedBarcodeView(LocalContext.current)
+    val scanEnabled = remember { mutableStateOf(true) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         CameraScanner(
             barcodeView,
             lastScannedCode,
+            scanEnabled,
             onCodeScanned
         )
         TopBarQRScanner(
@@ -208,14 +209,12 @@ fun toggleTorch(barcodeView: BarcodeView, enable: Boolean) {
 }
 
 @Composable
-@UiComposable
 fun CameraScanner(
     barcodeView: DecoratedBarcodeView,
     lastScannedCode: MutableState<String>,
+    scanEnabled: MutableState<Boolean>,
     onCodeScanned: (String) -> Unit
 ) {
-    var scanEnabled by remember { mutableStateOf(true) }
-
     // Камера для сканирования
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
@@ -224,15 +223,15 @@ fun CameraScanner(
                     // Обработка сканированных кодов
                     decodeContinuous { result ->
                         result?.text?.let { scannedText ->
-                            if (scanEnabled) {
+                            if (scanEnabled.value) {
                                 lastScannedCode.value = scannedText
-                                scanEnabled = false
+                                scanEnabled.value = false
 
                                 // Вызываем колбэк с отсканированным кодом
                                 onCodeScanned(scannedText)
                                 CoroutineScope(Dispatchers.IO).launch {
                                     delay(2000)
-                                    scanEnabled = true
+                                    scanEnabled.value = true
                                 }
                             }
                         }

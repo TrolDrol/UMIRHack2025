@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.az.umirhackapp.server.auth.AuthState
 import com.az.umirhackapp.server.auth.AuthViewModel
@@ -44,8 +46,8 @@ fun RegistrationScreen(
 ) {
     val authState by authViewModel.authState.collectAsState()
     var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+    var password = remember { mutableStateOf("") }
+    var confirmPassword = remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
 
     val snackBarHostState = remember { SnackbarHostState() }
@@ -90,80 +92,35 @@ fun RegistrationScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Поле для имени
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = {
-                    Text(
-                        text = "Имя",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions.Default
+            OutlinedTextFieldDefault(
+                name,
+                {str -> name = str},
+                "Имя",
+                KeyboardOptions.Default
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Поле для email
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = {
-                    Text(
-                        text = "Email",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            OutlinedTextFieldDefault(
+                email,
+                {str -> email = str},
+                "Email",
+                KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Поле для пароля
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = {
-                    Text(
-                        text = "Пароль",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Подтверждение пароля
-            OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                label = {
-                    Text(
-                        text = "Подтвердите пароль",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-            )
+            // Поля для пароля и подтверждения
+            PasswordFields(password, confirmPassword)
 
             Spacer(modifier = Modifier.height(32.dp))
 
             // Кнопка регистрации
             Button(
                 onClick = {
-                    if (validateRegistration(email, password, confirmPassword, name)) {
-                        authViewModel.register(email, password, name)
+                    if (validateRegistration(email, password.value, confirmPassword.value, name)) {
+                        authViewModel.register(email, password.value, name)
                     } else {
                         scope.launch {
                             snackBarHostState.showSnackbar("Пожалуйста, заполните все поля корректно")
@@ -171,7 +128,7 @@ fun RegistrationScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = validateRegistration(email, password, confirmPassword, name) &&
+                enabled = validateRegistration(email, password.value, confirmPassword.value, name) &&
                         authState !is AuthState.Loading,
                 content = {
                     if (authState is AuthState.Loading) {
@@ -215,4 +172,51 @@ private fun validateRegistration(
             password.length >= 6 &&
             password == confirmPassword &&
             name.isNotBlank()
+}
+
+@Composable
+fun PasswordFields(
+    password: MutableState<String>,
+    confirmPassword: MutableState<String>
+) {
+    OutlinedTextFieldDefault(
+        password.value,
+        {str -> password.value = str},
+        "Пароль",
+        KeyboardOptions(keyboardType = KeyboardType.Password)
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    OutlinedTextFieldDefault(
+        confirmPassword.value,
+        {str -> confirmPassword.value = str},
+        "Подтвердите пароль",
+        KeyboardOptions(keyboardType = KeyboardType.Password),
+        PasswordVisualTransformation()
+    )
+}
+
+@Composable
+fun OutlinedTextFieldDefault(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    keyboardOptions: KeyboardOptions,
+    visualTransformation: PasswordVisualTransformation? = null
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { onValueChange(it) },
+        label = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge
+            )
+        },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        visualTransformation = visualTransformation ?: VisualTransformation.None,
+        keyboardOptions = keyboardOptions
+    )
 }

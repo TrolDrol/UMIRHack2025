@@ -207,7 +207,7 @@ val products = listOf(
     )
 )
 
-val documents = listOf(
+var documents = listOf(
     Document(
         id = 1,
         type = "inventory",

@@ -12,6 +12,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,6 +29,7 @@ import com.az.umirhackapp.test.documents
 import com.az.umirhackapp.ui.dialogs.AddNewItemToDocumentDialog
 import com.az.umirhackapp.ui.dialogs.CompleteDocumentDialog
 import com.az.umirhackapp.ui.dialogs.NotExistProductDialog
+import com.az.umirhackapp.ui.dialogs.OnBackClickDocumentItemsScreenDialog
 import com.az.umirhackapp.ui.screens.CameraScanner
 import com.az.umirhackapp.ui.screens.createDecoratedBarcodeView
 import com.az.umirhackapp.ui.theme.AppTheme
@@ -37,34 +39,35 @@ fun DocumentItemsScreen(
     viewModel: TestViewModel = viewModel(),
     selectedDocument: Document,
     onBackClick: () -> Unit,
+    onStartInventory: (Document) -> Unit,
     onNotPermissionCamera: () -> Unit,
-    onCompleteDocument: () -> Unit,
-    onCancelDocument: () -> Unit
+    onCompleteDocument: (Document, List<DocumentItem>) -> Unit
 ) {
     var showCompletionDialog by remember { mutableStateOf(false) }
     var showAddNewItemToDocumentDialog by remember { mutableStateOf(false) }
     var showNotExistProductDialog by remember { mutableStateOf(false) }
+    var showOnBackClickDocumentItemsScreenDialog by remember { mutableStateOf(false) }
 
+    var selectedDocumentState by remember { mutableStateOf(selectedDocument) }
     val scannedProduct by viewModel.scannedProduct.collectAsState()
-    var documentItems = remember { mutableStateOf(selectedDocument.items) }
+    var documentItems = remember { mutableStateOf(selectedDocumentState.items) }
     var newDocumentItem = remember { mutableStateOf<DocumentItem?>(null) }
 
     val barcodeView = createDecoratedBarcodeView(LocalContext.current)
     val lastScannedCode = remember { mutableStateOf("") }
+    val scanEnabled = remember { mutableStateOf(true) }
+
+    val visibilityScaffold = remember { mutableFloatStateOf(1f) }
 
     LaunchedEffect(scannedProduct) {
-        println("1. LaunchedEffect(${scannedProduct})")
         scannedProduct?.let { product ->
-            println("2. LaunchedEffect: ${documentItems.value}")
             val itemIndex = documentItems.value.indexOfFirst { it.productId == product.id }
             if (itemIndex == -1) {
                 newDocumentItem.value = DocumentItem(
-                    0, selectedDocument.id, product.id, 0.0, 1.0, product
+                    0, selectedDocumentState.id, product.id, 0.0, 1.0, product
                 )
-                println("3. LaunchedEffect: ${newDocumentItem.value}")
                 showAddNewItemToDocumentDialog = true
             } else {
-                println("4. LaunchedEffect: ${documentItems.value}")
                 val updatedItems = documentItems.value.toMutableList()
                 val oldItem = updatedItems[itemIndex]
 
@@ -75,7 +78,6 @@ fun DocumentItemsScreen(
 
                 updatedItems[itemIndex] = updatedItem
                 documentItems.value = updatedItems
-                println("4. LaunchedEffect: ${documentItems.value}")
             }
         }
         viewModel.clearScannedProduct()
@@ -92,6 +94,7 @@ fun DocumentItemsScreen(
                 CameraScanner(
                     barcodeView,
                     lastScannedCode,
+                    scanEnabled,
                     { barcode ->
                         showNotExistProductDialog = viewModel.scanProduct(barcode)
                     }
@@ -102,26 +105,40 @@ fun DocumentItemsScreen(
             // Управление жизненным циклом сканера
             DisposableEffect(Unit) {
                 barcodeView.resume()
+                if (visibilityScaffold.floatValue == 1f)
+                    scanEnabled.value = false
+                else
+                    scanEnabled.value = true
 
                 onDispose {
                     barcodeView.pause()
                 }
             }
         }
+
         Scaffold(
-            modifier = Modifier.alpha(0.5f),
+            modifier = Modifier.alpha(visibilityScaffold.floatValue),
             topBar = {
                 DocumentItemsTopBar(
-                    selectedDocument = selectedDocument,
-                    onBackClick = onBackClick
+                    selectedDocument = selectedDocumentState,
+                    onBackClick = {
+                        if (selectedDocumentState.status == "in_progress")
+                            showOnBackClickDocumentItemsScreenDialog = true
+                        else
+                            onBackClick()
+                    }
                 )
             },
             bottomBar = {
                 DocumentActionsBottomBar(
-                    selectedDocument = selectedDocument,
+                    selectedDocument = selectedDocumentState,
                     documentItems = documentItems.value,
-                    onCompleteClick = { showCompletionDialog = true },
-                    onCancelClick = onCancelDocument
+                    visibilityScaffold = visibilityScaffold,
+                    onStartInventory = {document ->
+                        onStartInventory(document)
+                        selectedDocumentState = selectedDocument.copy(status = "in_progress")
+                    },
+                    onCompleteClick = { showCompletionDialog = true }
                 )
             }
         ) { paddingValues ->
@@ -131,27 +148,27 @@ fun DocumentItemsScreen(
                     .padding(paddingValues)
             ) {
                 // Статус документа и статистика
-                DocumentHeader(selectedDocument, documentItems)
+                DocumentHeader(selectedDocumentState, documentItems)
 
                 // Список товаров
                 DocumentItemsList(
                     documentItems = documentItems,
-                    selectedDocument = selectedDocument
+                    selectedDocument = selectedDocumentState
                 )
             }
 
-            // Диалог завершения документа
-            if (showCompletionDialog) {
+            // Диалоги
+            if (showCompletionDialog)
                 CompleteDocumentDialog(
                     documentItems = documentItems.value,
                     onConfirm = {
-                        onCompleteDocument()
+                        onCompleteDocument(selectedDocumentState, documentItems.value)
                         showCompletionDialog = false
                     },
                     onDismiss = { showCompletionDialog = false }
                 )
-            }
-            if (showAddNewItemToDocumentDialog) {
+
+            if (showAddNewItemToDocumentDialog)
                 AddNewItemToDocumentDialog(
                     newDocumentItem,
                     {
@@ -167,14 +184,23 @@ fun DocumentItemsScreen(
                         showAddNewItemToDocumentDialog = false
                     }
                 )
-            }
 
-            if (showNotExistProductDialog) {
+            if (showNotExistProductDialog)
                 NotExistProductDialog(
                     lastScannedCode.value,
                     { showNotExistProductDialog = false }
                 )
-            }
+
+            if (showOnBackClickDocumentItemsScreenDialog)
+                OnBackClickDocumentItemsScreenDialog(
+                    {
+                        showOnBackClickDocumentItemsScreenDialog = false
+                        onBackClick()
+                    },
+                    {
+                        showOnBackClickDocumentItemsScreenDialog = false
+                    }
+                )
         }
     }
 }
@@ -187,8 +213,8 @@ fun PreviewDocumentItemsScreen() {
         selectedDocument = documents[1],
         onBackClick = {  },
         onNotPermissionCamera = {  },
-        onCancelDocument = {  },
-        onCompleteDocument = {  }
+        onStartInventory = {  },
+        onCompleteDocument = { document, list -> }
     )
         }
 }

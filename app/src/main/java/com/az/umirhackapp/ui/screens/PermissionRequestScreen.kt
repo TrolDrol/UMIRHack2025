@@ -33,8 +33,7 @@ fun PermissionRequestScreen(
 
     // Список разрешений для запроса
     val permissions = arrayOf(
-        Manifest.permission.CAMERA,
-        //Manifest.permission.READ_EXTERNAL_STORAGE
+        Manifest.permission.CAMERA
     )
 
     val permissionLauncher = rememberLauncherForActivityResult(

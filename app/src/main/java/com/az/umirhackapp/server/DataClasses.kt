@@ -56,7 +56,7 @@ data class Document(
     val id: Int,
     val type: String,
     val number: String,
-    val status: String,
+    val status: String, // 'draft', 'in_progress', 'completed', 'cancelled'
     val dateCreated: String,
     val documentDate: String,
     val organizationId: Int,

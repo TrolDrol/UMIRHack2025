@@ -58,16 +58,15 @@ class TestViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(isLoading = false)
     }
 
-    fun updateDocumentItem(documentItem: DocumentItem, value: Double) {
+    fun updateDocument(newDocument: Document) {
         _uiState.value = _uiState.value.copy(isLoading = true)
-        println("До: " + _uiState.value.selectDocument)
-        val document = _uiState.value.selectDocument
-        document?.items?.map { if (it == documentItem) it.copy(quantityActual = value) }
-        _uiState.value = _uiState.value.copy(
-            selectDocument = document
-        )
 
-        println("После: " + _uiState.value.selectDocument)
+        val oldDocuments = documents.toMutableList()
+        val indexDocument = documents.indexOf(oldDocuments.find { it.number == newDocument.number })
+        if (indexDocument != -1) {
+            oldDocuments[indexDocument] = newDocument
+            documents = oldDocuments.toList()
+        }
 
         _uiState.value = _uiState.value.copy(isLoading = false)
     }
@@ -120,6 +119,17 @@ class TestViewModel : ViewModel() {
 
     fun clearScannedProduct() {
         _scannedProduct.value = null
+    }
+
+    fun setError() {
+        _uiState.value = _uiState.value.copy(error = "TEST ERROR")
+    }
+    fun setSuccessMessage() {
+        _uiState.value = _uiState.value.copy(successMessage = "TEST successMessage")
+    }
+
+    fun clearSelectDocument() {
+        _uiState.value = _uiState.value.copy(selectDocument = null)
     }
 
 }
