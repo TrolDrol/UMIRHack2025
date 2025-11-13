@@ -105,10 +105,7 @@ fun DocumentItemsScreen(
             // Управление жизненным циклом сканера
             DisposableEffect(Unit) {
                 barcodeView.resume()
-                if (visibilityScaffold.floatValue == 1f)
-                    scanEnabled.value = false
-                else
-                    scanEnabled.value = true
+                //scanEnabled.value = visibilityScaffold.floatValue != 1f
 
                 onDispose {
                     barcodeView.pause()

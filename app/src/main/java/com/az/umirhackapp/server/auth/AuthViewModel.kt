@@ -61,10 +61,7 @@ class AuthViewModel(
                     result.data.token?.let { token ->
                         tokenService.saveAuthToken(token)
                     }
-                    result.data.user?.let { user ->
-                        tokenService.saveUserId(user.id.toString())
-                        _currentUser.value = user
-                    }
+                    loadCurrentUser()
                     _authState.value = AuthState.Success(result.data)
                     _isLoggedIn.value = true
                 }

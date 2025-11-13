@@ -24,7 +24,8 @@ data class User(
     val id: Int,
     val email: String,
     val fullName: String,
-    val createdAt: String
+    val createdAt: String?,
+    val organization: List<Organization>?
 )
 
 data class Organization(

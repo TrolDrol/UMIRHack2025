@@ -32,8 +32,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.az.umirhackapp.ui.Screen
+import com.az.umirhackapp.ui.theme.AppTheme
 
 @Composable
 fun SettingsScreen(
@@ -260,5 +262,25 @@ fun SettingsItem(
         )
 
         action()
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun PreviewSettingsScreen() {
+    AppTheme {
+        SettingsScreen(
+            onBackClick = {
+            },
+            onLanguageClick = {
+                // В будущем можно добавить экран выбора языка
+            },
+            onPrivacyClick = {
+                // В будущем можно добавить экран конфиденциальности
+            },
+            onStorageClick = {
+                // В будущем можно добавить экран управления хранилищем
+            }
+        )
     }
 }

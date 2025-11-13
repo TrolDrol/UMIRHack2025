@@ -26,11 +26,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.az.umirhackapp.server.NetworkModule
 import com.az.umirhackapp.server.auth.AuthViewModel
 import com.az.umirhackapp.server.User
+import com.az.umirhackapp.server.auth.AuthRepository
+import com.az.umirhackapp.server.auth.TokenService
 import com.az.umirhackapp.ui.Screen
+import com.az.umirhackapp.ui.theme.AppTheme
 
 @Composable
 fun ProfileScreen(
@@ -93,7 +100,8 @@ fun ProfileScreen(
                 id = 0,
                 email = "Загрузка...",
                 fullName = "Загрузка...",
-                createdAt = "01.01.1970"
+                createdAt = "01.01.1970",
+                organization = emptyList()
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -127,7 +135,7 @@ fun ProfileScreen(
                     ) {
                         ProfileInfoItem(
                             title = "Дата регистрации",
-                            value = user.createdAt
+                            value = user.createdAt.toString()
                         )
                     }
                 }
@@ -194,6 +202,30 @@ fun ProfileInfoItem(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun PreviewProfileScreen() {
+    val authRepository = AuthRepository(NetworkModule.apiService)
+    val tokenService = TokenService(LocalContext.current)
+    val authViewModel: AuthViewModel = viewModel { AuthViewModel(authRepository, tokenService) }
+
+    AppTheme {
+        ProfileScreen(
+            authViewModel = authViewModel,
+            onSettingsClick = {
+            },
+            onEditProfileClick = {
+                // В будущем можно добавить экран редактирования профиля
+            },
+            onLogoutClick = {
+                authViewModel.logout()
+            },
+            onBackClick = {
+            }
         )
     }
 }

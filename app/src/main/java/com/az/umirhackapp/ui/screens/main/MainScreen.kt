@@ -30,16 +30,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.az.umirhackapp.server.User
 import com.az.umirhackapp.test.TestViewModel
-import com.az.umirhackapp.test.documents
 import com.az.umirhackapp.ui.Screen
 
 @Composable
 fun MainScreen(
-    user: User = User(0, "example@com", "Иванов Иван", "+71231231212"),
+    user: User = User(0, "example@com", "Иванов Иван", null, null),
     viewModel: TestViewModel,
     label: String = "",
     onProfileClick: () -> Unit,
@@ -47,7 +45,7 @@ fun MainScreen(
     onQRScannerClick: () -> Unit,
     onBackClick: () -> Unit,
     loadContent: () -> Unit,
-    content: @Composable (String) -> Unit
+    content: @Composable ((String) -> Unit)
 ) {
     LaunchedEffect(Unit) {
         loadContent()
@@ -172,13 +170,39 @@ fun ScanFloatingActionButton(onQRScannerClick: () -> Unit) {
     }
 }
 
-@Preview(showSystemUi = true)
-@Composable
-fun Preview() {
-    LazyColumnItems(
-        items = documents[0].items,
-        {},
-        Screen.MAIN_DOCUMENT_ITEMS,
-        ""
-    )
-}
+//@Preview(showSystemUi = true)
+//@Composable
+//fun PreviewMainScreen() {
+//    val tokenService = TokenService(LocalContext.current)
+//    val inventoryRepository = InventoryRepository(NetworkModule.apiService, tokenService)
+//    val inventoryViewModel = viewModel { InventoryViewModel(inventoryRepository) }
+//
+//    AppTheme {
+//        MainScreen(
+//            User(0, "example@com", "Иванов Иван", null, null),
+//            inventoryViewModel,
+//            label = Screen.MAIN_ORGANIZATIONS.title,
+//            onProfileClick = {
+//            },
+//            onNotificationClick = {
+//                // В будущем можно добавить экран уведомлений
+//            },
+//            onQRScannerClick = {
+//            },
+//            onBackClick = { },
+//            loadContent = {
+//                inventoryViewModel.loadOrganizations()
+//            },
+//            content = { searchText ->
+//                LazyColumnItems(
+//                    organizations,
+//                    { org ->
+//                        inventoryViewModel.selectOrganization(org)
+//                    },
+//                    Screen.MAIN_ORGANIZATIONS,
+//                    searchText
+//                )
+//            }
+//        )
+//    }
+//}

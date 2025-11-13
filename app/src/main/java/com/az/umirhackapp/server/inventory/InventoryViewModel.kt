@@ -31,9 +31,10 @@ class InventoryViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = repository.getOrganizations()) {
                 is Result.Success -> {
+                    val organizations = result.data.data!!
                     _uiState.value = _uiState.value.copy(
-                        organizations = result.data.data!!,
-                        selectedOrganization = result.data.data.firstOrNull()
+                        organizations = organizations,
+                        selectedOrganization = organizations.firstOrNull()
                     )
                     // Автоматически загружаем склады для выбранной организации
                     result.data.data.firstOrNull()?.let { org ->
@@ -53,7 +54,7 @@ class InventoryViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = repository.getWarehouses(organizationId)) {
                 is Result.Success -> {
-                    _uiState.value = _uiState.value.copy(warehouses = result.data.data!!)
+                    _uiState.value = _uiState.value.copy(warehouses = result.data.data ?: emptyList())
                 }
                 is Result.Failure -> {
                     _uiState.value = _uiState.value.copy(error = result.exception.message)

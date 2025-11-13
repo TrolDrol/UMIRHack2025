@@ -43,6 +43,7 @@ class TestViewModel : ViewModel() {
         val cleanBarcode = barcode.trim()
         val foundProduct = products.find { it.barcode == cleanBarcode }
         _scannedProduct.value = foundProduct
+        println(foundProduct)
 
         _uiState.value = _uiState.value.copy(error = null)
         _uiState.value = _uiState.value.copy(isLoading = false)

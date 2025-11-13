@@ -2,7 +2,6 @@ package com.az.umirhackapp.server.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.az.umirhackapp.server.auth.TokenService
 
 class AuthViewModelFactory(
     private val authRepository: AuthRepository,

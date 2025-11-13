@@ -11,36 +11,36 @@ import retrofit2.http.Query
 
 interface ApiService {
     // Аутентификация
-    @POST("auth/register")
+    @POST("api/auth/register")
     suspend fun register(@Body request: AuthRequest): Response<AuthResponse>
 
-    @POST("auth/login")
+    @POST("api/auth/login")
     suspend fun login(@Body request: AuthRequest): Response<AuthResponse>
 
-    @GET("user/profile")
+    @GET("api/user/profile")
     suspend fun getCurrentUser(@Header("Authorization") token: String): Response<ApiResponse<User>>
 
     // Продукты
-    @GET("product/{barcode}")
+    @GET("api/products/barcode/{barcode}")
     suspend fun getProduct(
         @Header("Authorization") token: String,
         @Path("barcode") barcode: String
     ): Response<ApiResponse<Product>>
 
     // Организации и склады
-    @GET("organizations")
+    @GET("api/organizations/my/mobile")
     suspend fun getOrganizations(
         @Header("Authorization") token: String
     ): Response<ApiResponse<List<Organization>>>
 
-    @GET("warehouses/{organizationId}")
+    @GET("api/warehouses/mobile")
     suspend fun getWarehouses(
         @Header("Authorization") token: String,
-        @Path("organizationId") organizationId: Int
+        @Query("organizationId") organizationId: Int
     ): Response<ApiResponse<List<Warehouse>>>
 
     // Документы
-    @GET("documents")
+    @GET("api/documents")
     suspend fun getDocuments(
         @Header("Authorization") token: String,
         @Query("organizationId") organizationId: Int,
@@ -49,26 +49,26 @@ interface ApiService {
         @Query("status") status: String? = null
     ): Response<ApiResponse<List<Document>>>
 
-    @GET("documents/{documentId}")
+    @GET("api/documents/{documentId}")
     suspend fun getDocument(
         @Header("Authorization") token: String,
         @Path("documentId") documentId: Int
     ): Response<ApiResponse<Document>>
 
-    @POST("documents")
+    @POST("api/documents")
     suspend fun createDocument(
         @Header("Authorization") token: String,
         @Body request: CreateDocumentRequest
     ): Response<ApiResponse<Document>>
 
-    @POST("documents/{documentId}/add-product")
+    @POST("api/documents/{documentId}/add-product")
     suspend fun addProductToDocument(
         @Header("Authorization") token: String,
         @Path("documentId") documentId: Int,
         @Body request: AddProductRequest
     ): Response<ApiResponse<DocumentItem>>
 
-    @PUT("documents/{documentId}/status")
+    @PUT("api/documents/{documentId}/status")
     suspend fun updateDocumentStatus(
         @Header("Authorization") token: String,
         @Path("documentId") documentId: Int,

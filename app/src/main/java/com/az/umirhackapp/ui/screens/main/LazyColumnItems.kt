@@ -93,6 +93,6 @@ fun PreviewLazyColumnItems() {
         organizations,
         {_ ->},
         Screen.MAIN_ORGANIZATIONS,
-        "ро"
+        ""
     )
 }

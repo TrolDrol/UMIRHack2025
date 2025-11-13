@@ -29,13 +29,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.az.umirhackapp.server.NetworkModule
+import com.az.umirhackapp.server.auth.AuthRepository
 import com.az.umirhackapp.server.auth.AuthState
 import com.az.umirhackapp.server.auth.AuthViewModel
+import com.az.umirhackapp.server.auth.TokenService
 import com.az.umirhackapp.ui.Screen
+import com.az.umirhackapp.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
 @Composable
@@ -219,4 +226,22 @@ fun OutlinedTextFieldDefault(
         visualTransformation = visualTransformation ?: VisualTransformation.None,
         keyboardOptions = keyboardOptions
     )
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun PreviewRegistrationScreen() {
+    val authRepository = AuthRepository(NetworkModule.apiService)
+    val tokenService = TokenService(LocalContext.current)
+    val authViewModel: AuthViewModel = viewModel { AuthViewModel(authRepository, tokenService) }
+
+    AppTheme {
+        RegistrationScreen(
+            authViewModel = authViewModel,
+            onRegisterSuccess = {
+            },
+            onLoginClick = {
+            }
+        )
+    }
 }

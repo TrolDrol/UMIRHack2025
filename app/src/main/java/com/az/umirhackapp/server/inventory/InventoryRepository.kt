@@ -8,10 +8,10 @@ import com.az.umirhackapp.server.Document
 import com.az.umirhackapp.server.DocumentItem
 import com.az.umirhackapp.server.Organization
 import com.az.umirhackapp.server.Product
+import com.az.umirhackapp.server.Result
 import com.az.umirhackapp.server.Warehouse
 import com.az.umirhackapp.server.auth.TokenService
 import retrofit2.Response
-import com.az.umirhackapp.server.Result
 
 class InventoryRepository(
     private val apiService: ApiService,
@@ -21,11 +21,14 @@ class InventoryRepository(
         return try {
             val response = apiCall()
             if (response.isSuccessful) {
+                println("safeApiCall: isSuccessful" + response.body()!!)
                 Result.Success(response.body()!!)
             } else {
+                println("safeApiCall: Failure")
                 Result.Failure(Exception("API Error: ${response.code()}"))
             }
         } catch (e: Exception) {
+            println("safeApiCall: $e")
             Result.Failure(e)
         }
     }
@@ -38,7 +41,7 @@ class InventoryRepository(
     // Организации и склады
     suspend fun getOrganizations(): Result<ApiResponse<List<Organization>>> {
         val token = tokenService.getAuthToken() ?: return Result.Failure(Exception("No token"))
-        return safeApiCall { apiService.getOrganizations("Bearer $token") }
+        return (safeApiCall { apiService.getOrganizations("Bearer $token") })
     }
 
     suspend fun getWarehouses(organizationId: Int): Result<ApiResponse<List<Warehouse>>> {

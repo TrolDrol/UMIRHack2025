@@ -2,13 +2,13 @@ package com.az.umirhackapp
 
 import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,7 +26,6 @@ import com.az.umirhackapp.server.auth.AuthRepository
 import com.az.umirhackapp.server.auth.AuthViewModel
 import com.az.umirhackapp.server.auth.TokenService
 import com.az.umirhackapp.server.inventory.InventoryRepository
-import com.az.umirhackapp.server.inventory.InventoryViewModel
 import com.az.umirhackapp.test.TestViewModel
 import com.az.umirhackapp.ui.Screen
 import com.az.umirhackapp.ui.screens.LoadingScreen
@@ -67,7 +66,7 @@ fun AppNavigation() {
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
 
     val inventoryRepository = InventoryRepository(NetworkModule.apiService, tokenService)
-    val inventoryViewModel = viewModel { InventoryViewModel(inventoryRepository) }
+    //val inventoryViewModel = viewModel { InventoryViewModel(inventoryRepository) }
 
     // TODO("")
     val testViewModel = viewModel { TestViewModel() }
@@ -82,34 +81,31 @@ fun AppNavigation() {
 
     val navController = rememberNavController()
 
+    
+    // Обработка навигации в зависимости от состояния авторизации
+    LaunchedEffect(isLoggedIn, hasPermissions) {
+        if (!hasPermissions) {
+            navController.navigate(Screen.PERMISSION_REQUEST.route) {
+                popUpTo(Screen.LOADING.route) { inclusive = true }
+            }
+            return@LaunchedEffect
+        }
 
-
-//    // TODO("")
-//    // Обработка навигации в зависимости от состояния авторизации
-//    LaunchedEffect(isLoggedIn, hasPermissions) {
-//        if (!hasPermissions) {
-//            navController.navigate(Screen.PERMISSION_REQUEST.route) {
-//                popUpTo(Screen.LOADING.route) { inclusive = true }
-//            }
-//            return@LaunchedEffect
-//        }
-//
-//        if (isLoggedIn)
-//            // Если пользователь авторизован, переходим на главный экран
-//            navController.navigate(Screen.MAIN.route) {
-//                popUpTo(Screen.LOADING.route) { inclusive = true }
-//            }
-//        else
-//            // Если не авторизован, переходим на экран регистрации
-//            navController.navigate(Screen.REGISTRATION.route) {
-//                popUpTo(Screen.LOADING.route) { inclusive = true }
-//            }
-//    }
+        if (isLoggedIn)
+            // Если пользователь авторизован, переходим на главный экран
+            navController.navigate(Screen.MAIN_ORGANIZATIONS.route) {
+                popUpTo(Screen.LOADING.route) { inclusive = true }
+            }
+        else
+            // Если не авторизован, переходим на экран регистрации
+            navController.navigate(Screen.REGISTRATION.route) {
+                popUpTo(Screen.LOADING.route) { inclusive = true }
+            }
+    }
 
     NavHost(
         navController = navController,
-//        TODO("Screen.LOADING.route")
-        startDestination = Screen.MAIN_ORGANIZATIONS.route
+        startDestination = Screen.LOADING.route
     ) {
         // Экран загрузки
         composable(Screen.LOADING.route) {
@@ -124,7 +120,7 @@ fun AppNavigation() {
             RegistrationScreen(
                 authViewModel = authViewModel,
                 onRegisterSuccess = {
-                    navController.navigate(Screen.MAIN.route) {
+                    navController.navigate(Screen.MAIN_ORGANIZATIONS.route) {
                         popUpTo(Screen.REGISTRATION.route) { inclusive = true }
                     }
                 },
@@ -140,7 +136,7 @@ fun AppNavigation() {
                 authViewModel = authViewModel,
                 onLoginSuccess = {
                     // Успешный вход - переходим на главный экран
-                    navController.navigate(Screen.MAIN.route) {
+                    navController.navigate(Screen.MAIN_ORGANIZATIONS.route) {
                         popUpTo(Screen.LOGIN.route) { inclusive = true }
                     }
                 },
@@ -153,7 +149,7 @@ fun AppNavigation() {
         // Главный экран
         composable(Screen.MAIN_ORGANIZATIONS.route) {
             MainScreen(
-                authViewModel.currentUser.value ?: User(0, "example@com", "Иванов Иван", "+71231231212"),
+                authViewModel.currentUser.value ?: User(0, "example@com", "Иванов Иван", null, null),
                 testViewModel,
                 label = Screen.MAIN_ORGANIZATIONS.title,
                 onProfileClick = {
@@ -167,9 +163,7 @@ fun AppNavigation() {
                 },
                 onBackClick = { navController.popBackStack() },
                 loadContent = {
-                    println(testViewModel.uiState.value.organizations)
                     testViewModel.loadOrganizations()
-                    println(testViewModel.uiState.value.organizations)
                               },
                 content = { searchText ->
                     LazyColumnItems(
@@ -189,7 +183,7 @@ fun AppNavigation() {
 
         composable(Screen.MAIN_WAREHOUSES.route) {
             MainScreen(
-                authViewModel.currentUser.value ?: User(0, "example@com", "Иванов Иван", "+71231231212"),
+                authViewModel.currentUser.value ?: User(0, "example@com", "Иванов Иван", null, null),
                 testViewModel,
                 label = Screen.MAIN_WAREHOUSES.title,
                 onProfileClick = {
@@ -225,7 +219,7 @@ fun AppNavigation() {
 
         composable(Screen.MAIN_DOCUMENTS.route) {
             MainScreen(
-                authViewModel.currentUser.value ?: User(0, "example@com", "Иванов Иван", "+71231231212"),
+                authViewModel.currentUser.value ?: User(0, "example@com", "Иванов Иван", null, null),
                 testViewModel,
                 label = Screen.MAIN_DOCUMENTS.title,
                 onProfileClick = {
@@ -276,7 +270,8 @@ fun AppNavigation() {
                         items = documentItems
                     )
                     testViewModel.updateDocument(newDocument)
-                    navController.popBackStack() }
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -293,7 +288,7 @@ fun AppNavigation() {
                 onLogoutClick = {
                     authViewModel.logout()
                     navController.navigate(Screen.REGISTRATION.route) {
-                        popUpTo(Screen.MAIN.route) { inclusive = true }
+                        popUpTo(Screen.MAIN_ORGANIZATIONS.route) { inclusive = true }
                     }
                 },
                 onBackClick = {
@@ -326,7 +321,6 @@ fun AppNavigation() {
                     navController.popBackStack()
                 },
                 onCodeScanned = { barcode ->
-                    Log.i("onCodeScanned", barcode)
                     testViewModel.scanProduct(barcode)
                 },
                 onNotPermissionCamera = {
@@ -343,8 +337,7 @@ fun AppNavigation() {
                 onPermissionsGranted = {
                     permissionPrefs.edit { putBoolean("check", true) }
                     navController.navigate(
-                        Screen.MAIN.route
-//                        TODO("if (isLoggedIn) Screen.MAIN.route else Screen.REGISTRATION.route")
+                        if (isLoggedIn) Screen.MAIN_ORGANIZATIONS.route else Screen.REGISTRATION.route
                     ) {
                         popUpTo(Screen.PERMISSION_REQUEST.route) { inclusive = true }
                     }

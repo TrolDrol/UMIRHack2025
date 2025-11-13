@@ -14,8 +14,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.az.umirhackapp.ui.theme.AppTheme
 
 // Альтернативная версия с кастомными параметрами
 @Composable
@@ -62,5 +64,16 @@ fun LoadingScreen(
          LaunchedEffect(Unit) {
              content()
          }
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun PreviewLoadingScreen() {
+    AppTheme {
+        LoadingScreen(
+            message = "Загружаем приложение...",
+            subMessage = "Пожалуйста, подождите"
+        )
     }
 }

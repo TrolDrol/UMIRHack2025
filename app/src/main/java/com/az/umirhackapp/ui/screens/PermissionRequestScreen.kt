@@ -20,8 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.az.umirhackapp.ui.theme.AppTheme
 
 @Composable
 fun PermissionRequestScreen(
@@ -90,5 +92,20 @@ fun PermissionRequestScreen(
         TextButton(onClick = onBackClick) {
             Text("Назад")
         }
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun PreviewPermissionRequestScreen() {
+    AppTheme {
+        PermissionRequestScreen(
+            onBackClick = {
+            },
+            onPermissionsGranted = {
+            },
+            onPermissionsDenied = {
+            }
+        )
     }
 }

@@ -32,10 +32,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.az.umirhackapp.server.NetworkModule
+import com.az.umirhackapp.server.auth.TokenService
+import com.az.umirhackapp.server.inventory.InventoryRepository
+import com.az.umirhackapp.server.inventory.InventoryViewModel
 import com.az.umirhackapp.ui.Screen
+import com.az.umirhackapp.ui.theme.AppTheme
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeView
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
@@ -263,4 +270,24 @@ fun createDecoratedBarcodeView(context: Context): DecoratedBarcodeView {
     }
     barcodeView.setStatusText("")
     return barcodeView
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun PreviewQRScannerScreen() {
+    val tokenService = TokenService(LocalContext.current)
+    val inventoryRepository = InventoryRepository(NetworkModule.apiService, tokenService)
+    val inventoryViewModel = viewModel { InventoryViewModel(inventoryRepository) }
+
+    AppTheme {
+        QRScannerScreen(
+            onBackClick = {
+            },
+            onCodeScanned = { barcode ->
+                inventoryViewModel.scanProduct(barcode)
+            },
+            onNotPermissionCamera = {
+            }
+        )
+    }
 }
