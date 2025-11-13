@@ -40,7 +40,7 @@ fun DocumentHeader(
             ) {
                 Column {
                     Text("Склад: ${selectedDocument.warehouse?.name ?: "Не указан"}")
-                    Text("Дата: ${selectedDocument.documentDate}")
+                    Text("Дата: ${selectedDocument.documentDate.substring(0..19)}")
                 }
                 Text(
                     getStatusText(selectedDocument.status),

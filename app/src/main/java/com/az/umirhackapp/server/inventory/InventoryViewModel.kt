@@ -3,10 +3,12 @@ package com.az.umirhackapp.server.inventory
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.az.umirhackapp.server.Document
+import com.az.umirhackapp.server.DocumentItem
 import com.az.umirhackapp.server.Organization
 import com.az.umirhackapp.server.Product
 import com.az.umirhackapp.server.Result
 import com.az.umirhackapp.server.Warehouse
+import com.az.umirhackapp.test.documentItems
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -33,13 +35,8 @@ class InventoryViewModel(
                 is Result.Success -> {
                     val organizations = result.data.data!!
                     _uiState.value = _uiState.value.copy(
-                        organizations = organizations,
-                        selectedOrganization = organizations.firstOrNull()
+                        organizations = organizations
                     )
-                    // Автоматически загружаем склады для выбранной организации
-                    result.data.data.firstOrNull()?.let { org ->
-                        loadWarehouses(org.id)
-                    }
                 }
                 is Result.Failure -> {
                     _uiState.value = _uiState.value.copy(error = result.exception.message)
@@ -65,7 +62,7 @@ class InventoryViewModel(
     }
 
     // Сканирование продукта
-    fun scanProduct(barcode: String) {
+    fun scanProduct(barcode: String, onNotExistProduct: () -> Unit) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = repository.getProductByBarcode(barcode)) {
@@ -76,6 +73,7 @@ class InventoryViewModel(
                 is Result.Failure -> {
                     _scannedProduct.value = null
                     _uiState.value = _uiState.value.copy(error = "Товар не найден: ${result.exception.message}")
+                    onNotExistProduct()
                 }
             }
             _uiState.value = _uiState.value.copy(isLoading = false)
@@ -86,9 +84,12 @@ class InventoryViewModel(
     fun loadDocuments(organizationId: Int, warehouseId: Int? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            when (val result = repository.getDocuments(organizationId, warehouseId, "inventory")) {
+            when (val result = repository.getDocuments(organizationId, warehouseId)) {
                 is Result.Success -> {
-                    _uiState.value = _uiState.value.copy(error = null, documents = result.data.data!!)
+                    if (result.data.success)
+                        _uiState.value = _uiState.value.copy(error = null, documents = result.data.data!!)
+                    else
+                        _uiState.value = _uiState.value.copy(error = result.data.error)
                 }
                 is Result.Failure -> {
                     _uiState.value = _uiState.value.copy(error = result.exception.message)
@@ -99,24 +100,21 @@ class InventoryViewModel(
     }
 
     // Добавление продукта в документ
-    fun addProductToDocument(documentId: Int, barcode: String, quantity: Double = 1.0) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            when (val result = repository.addProductToDocument(documentId, barcode, quantity)) {
-                is Result.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        error = null,
-                        successMessage = "Товар добавлен в документ"
-                    )
-                    // Обновляем список документов
-                    loadDocuments(_uiState.value.selectedOrganization?.id ?: return@launch)
-                }
-                is Result.Failure -> {
-                    _uiState.value = _uiState.value.copy(error = result.exception.message)
-                }
-            }
-            _uiState.value = _uiState.value.copy(isLoading = false)
-        }
+    fun addNewDocumentItemToDocument(item: DocumentItem) {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+
+        val newItemList = _uiState.value.selectDocument!!.items.toMutableList()
+
+        val itemWithId = item.copy(id = documentItems.size + 1)
+        newItemList.add(itemWithId)
+
+        val newList = documentItems.toMutableList()
+        newList.add(itemWithId)
+        documentItems = newList
+
+        _uiState.value.selectDocument?.items = newItemList
+
+        _uiState.value = _uiState.value.copy(isLoading = false)
     }
 
     // Создание нового документа
@@ -140,13 +138,41 @@ class InventoryViewModel(
         }
     }
 
+    fun updateDocumentStatus(documentId: Int, status: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            when(val result = repository.updateDocumentStatus(documentId, status)) {
+                is Result.Success -> {
+                    if (result.data.success) {
+                        _uiState.value = _uiState.value.copy(error = null)
+                        loadDocuments(
+                            _uiState.value.selectedOrganization!!.id,
+                            _uiState.value.selectedWarehouse!!.id
+                        )
+                    }
+                    else
+                        _uiState.value = _uiState.value.copy(error = result.data.error)
+                }
+                is Result.Failure -> {
+                    _uiState.value = _uiState.value.copy(error = result.exception.message)
+                }
+            }
+
+            _uiState.value = _uiState.value.copy(isLoading = false)
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null, successMessage = null)
     }
 
+    fun clearScannedProduct() {
+        _scannedProduct.value = null
+    }
+
     fun selectOrganization(organization: Organization) {
         _uiState.value = _uiState.value.copy(selectedOrganization = organization)
-        loadWarehouses(organization.id)
     }
 
     fun selectWarehouse(warehouse: Warehouse) {

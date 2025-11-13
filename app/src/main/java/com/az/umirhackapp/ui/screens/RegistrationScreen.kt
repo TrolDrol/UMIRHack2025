@@ -81,6 +81,7 @@ fun RegistrationScreen(
             SnackbarHost(hostState = snackBarHostState)
         }
     ) { paddingValues ->
+        Background()
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -103,7 +104,8 @@ fun RegistrationScreen(
                 name,
                 {str -> name = str},
                 "Имя",
-                KeyboardOptions.Default
+                KeyboardOptions.Default,
+                PasswordVisualTransformation()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -113,7 +115,8 @@ fun RegistrationScreen(
                 email,
                 {str -> email = str},
                 "Email",
-                KeyboardOptions(keyboardType = KeyboardType.Email)
+                KeyboardOptions(keyboardType = KeyboardType.Email),
+                PasswordVisualTransformation()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -160,7 +163,8 @@ fun RegistrationScreen(
                 content = {
                     Text(
                         text = "Уже есть аккаунт? Войти",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             )
@@ -190,7 +194,8 @@ fun PasswordFields(
         password.value,
         {str -> password.value = str},
         "Пароль",
-        KeyboardOptions(keyboardType = KeyboardType.Password)
+        KeyboardOptions(keyboardType = KeyboardType.Password),
+        PasswordVisualTransformation()
     )
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -210,7 +215,7 @@ fun OutlinedTextFieldDefault(
     onValueChange: (String) -> Unit,
     label: String,
     keyboardOptions: KeyboardOptions,
-    visualTransformation: PasswordVisualTransformation? = null
+    passwordVisualTransformation: PasswordVisualTransformation?
 ) {
     OutlinedTextField(
         value = value,
@@ -223,7 +228,7 @@ fun OutlinedTextFieldDefault(
         },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
-        visualTransformation = visualTransformation ?: VisualTransformation.None,
+        visualTransformation = passwordVisualTransformation ?: VisualTransformation.None,
         keyboardOptions = keyboardOptions
     )
 }

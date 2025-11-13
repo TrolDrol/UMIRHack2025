@@ -77,6 +77,7 @@ fun LoginScreen(
             SnackbarHost(hostState = snackBarHostState)
         }
     ) { paddingValues ->
+        Background()
         Column(
             modifier = Modifier
                 .fillMaxSize()

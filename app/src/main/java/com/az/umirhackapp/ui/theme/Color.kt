@@ -1,5 +1,9 @@
 package com.az.umirhackapp.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 //// Обычная тема
@@ -82,3 +86,23 @@ val surfaceVariantDark = Color(0xFF1E1E1E)
 val errorRed = Color(0xFFCF6679)
 val successGreen = Color(0xFF4CAF50)
 val warningAmber = Color(0xFFFFC107)
+
+// Градиентный фон
+@Composable
+fun getGradientBrush(): Brush {
+    return Brush.verticalGradient(
+        colors = if (isSystemInDarkTheme()) {
+            listOf(
+                MaterialTheme.colorScheme.background,
+                dark_700,
+                dark_800
+            )
+        } else {
+            listOf(
+                MaterialTheme.colorScheme.background,
+                blue_50,
+                MaterialTheme.colorScheme.background
+            )
+        }
+    )
+}

@@ -4,13 +4,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -27,18 +24,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.az.umirhackapp.server.User
-import com.az.umirhackapp.test.TestViewModel
+import com.az.umirhackapp.server.inventory.InventoryViewModel
 import com.az.umirhackapp.ui.Screen
+import com.az.umirhackapp.ui.screens.Background
 
 @Composable
 fun MainScreen(
     user: User = User(0, "example@com", "Иванов Иван", null, null),
-    viewModel: TestViewModel,
+    viewModel: InventoryViewModel,
     label: String = "",
     onProfileClick: () -> Unit,
     onNotificationClick: () -> Unit,
@@ -66,56 +62,17 @@ fun MainScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackBarHostState) },
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    content = {
-                        Text(
-                            text = "Добро пожаловать!",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = user.fullName,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                )
-
-                // Иконка уведомлений
-                IconButton(
-                    onClick = onNotificationClick,
-                    content = {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Уведомления"
-                        )
-                    }
-                )
-
-                // Иконка профиля
-                IconButton(
-                    onClick = onProfileClick,
-                    content = {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Профиль"
-                        )
-                    }
-                )
-            }
+            MainTopBar(
+                user,
+                onNotificationClick,
+                onProfileClick
+            )
         },
         floatingActionButton = {
             ScanFloatingActionButton(onQRScannerClick)
         }
     ) { paddingValues ->
+        Background()
         Column(
             modifier = Modifier
                 .fillMaxSize()

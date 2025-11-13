@@ -1,12 +1,15 @@
 package com.az.umirhackapp.ui.screens.document_items
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -24,7 +27,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.az.umirhackapp.server.Document
 import com.az.umirhackapp.server.DocumentItem
-import com.az.umirhackapp.test.TestViewModel
+import com.az.umirhackapp.server.inventory.InventoryViewModel
 import com.az.umirhackapp.test.documents
 import com.az.umirhackapp.ui.dialogs.AddNewItemToDocumentDialog
 import com.az.umirhackapp.ui.dialogs.CompleteDocumentDialog
@@ -34,15 +37,18 @@ import com.az.umirhackapp.ui.screens.CameraScanner
 import com.az.umirhackapp.ui.screens.createDecoratedBarcodeView
 import com.az.umirhackapp.ui.theme.AppTheme
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun DocumentItemsScreen(
-    viewModel: TestViewModel = viewModel(),
+    viewModel: InventoryViewModel = viewModel(),
     selectedDocument: Document,
     onBackClick: () -> Unit,
     onStartInventory: (Document) -> Unit,
     onNotPermissionCamera: () -> Unit,
     onCompleteDocument: (Document, List<DocumentItem>) -> Unit
 ) {
+    val visibilityScaffold = remember { mutableFloatStateOf(1f) }
+
     var showCompletionDialog by remember { mutableStateOf(false) }
     var showAddNewItemToDocumentDialog by remember { mutableStateOf(false) }
     var showNotExistProductDialog by remember { mutableStateOf(false) }
@@ -55,9 +61,11 @@ fun DocumentItemsScreen(
 
     val barcodeView = createDecoratedBarcodeView(LocalContext.current)
     val lastScannedCode = remember { mutableStateOf("") }
-    val scanEnabled = remember { mutableStateOf(true) }
 
-    val visibilityScaffold = remember { mutableFloatStateOf(1f) }
+    var scanEnabled = remember { mutableStateOf(true) }
+
+    val snackBarHostState = remember { SnackbarHostState() }
+    val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(scannedProduct) {
         scannedProduct?.let { product ->
@@ -83,6 +91,15 @@ fun DocumentItemsScreen(
         viewModel.clearScannedProduct()
     }
 
+    LaunchedEffect(uiState) {
+        if (uiState.error != null) {
+            snackBarHostState.showSnackbar("Error: ${uiState.error}")
+        }
+        if (uiState.successMessage != null) {
+            snackBarHostState.showSnackbar("SuccessMessage: ${uiState.successMessage}")
+        }
+    }
+
     // Проверка разрешения камеры
     val cameraPermission = ContextCompat.checkSelfPermission(
         LocalContext.current, Manifest.permission.CAMERA
@@ -96,7 +113,12 @@ fun DocumentItemsScreen(
                     lastScannedCode,
                     scanEnabled,
                     { barcode ->
-                        showNotExistProductDialog = viewModel.scanProduct(barcode)
+                        println("DocumentItemsScreen: $barcode")
+                        if (0.9 > visibilityScaffold.floatValue)
+                            viewModel.scanProduct(
+                                barcode,
+                                {showNotExistProductDialog = true}
+                            )
                     }
                 )
             } else {
@@ -105,7 +127,6 @@ fun DocumentItemsScreen(
             // Управление жизненным циклом сканера
             DisposableEffect(Unit) {
                 barcodeView.resume()
-                //scanEnabled.value = visibilityScaffold.floatValue != 1f
 
                 onDispose {
                     barcodeView.pause()
@@ -114,6 +135,7 @@ fun DocumentItemsScreen(
         }
 
         Scaffold(
+            snackbarHost = { SnackbarHost(snackBarHostState) },
             modifier = Modifier.alpha(visibilityScaffold.floatValue),
             topBar = {
                 DocumentItemsTopBar(
@@ -133,7 +155,7 @@ fun DocumentItemsScreen(
                     visibilityScaffold = visibilityScaffold,
                     onStartInventory = {document ->
                         onStartInventory(document)
-                        selectedDocumentState = selectedDocument.copy(status = "in_progress")
+                        println("selectedDocument: $selectedDocument")
                     },
                     onCompleteClick = { showCompletionDialog = true }
                 )
@@ -172,7 +194,7 @@ fun DocumentItemsScreen(
                         val newList = documentItems.value.toMutableList()
                         newList.add(newDocumentItem.value!!)
                         documentItems.value = newList
-                        viewModel.addNewDocumentItem(newDocumentItem.value!!)
+                        viewModel.addNewDocumentItemToDocument(newDocumentItem.value!!)
                         newDocumentItem.value = null
                         showAddNewItemToDocumentDialog = false
                     },

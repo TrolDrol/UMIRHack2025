@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FlashlightOff
 import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material3.Icon
@@ -82,7 +82,7 @@ fun ScannerContent(
 ) {
     var lastScannedCode = remember { mutableStateOf("") }
     val barcodeView = createDecoratedBarcodeView(LocalContext.current)
-    val scanEnabled = remember { mutableStateOf(true) }
+    var scanEnabled = remember { mutableStateOf(true) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         CameraScanner(
@@ -131,7 +131,7 @@ fun TopBarQRScanner(
             onClick = onBackClick,
             content = {
                 Icon(
-                    Icons.Default.ArrowBack,
+                    Icons.AutoMirrored.Default.ArrowBack,
                     contentDescription = "Назад",
                     tint = Color.White
                 )
@@ -231,6 +231,7 @@ fun CameraScanner(
                     decodeContinuous { result ->
                         result?.text?.let { scannedText ->
                             if (scanEnabled.value) {
+                                println(scanEnabled.toString())
                                 lastScannedCode.value = scannedText
                                 scanEnabled.value = false
 
@@ -284,7 +285,7 @@ fun PreviewQRScannerScreen() {
             onBackClick = {
             },
             onCodeScanned = { barcode ->
-                inventoryViewModel.scanProduct(barcode)
+                inventoryViewModel.scanProduct(barcode, {  })
             },
             onNotPermissionCamera = {
             }

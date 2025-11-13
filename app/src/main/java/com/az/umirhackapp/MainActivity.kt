@@ -26,6 +26,7 @@ import com.az.umirhackapp.server.auth.AuthRepository
 import com.az.umirhackapp.server.auth.AuthViewModel
 import com.az.umirhackapp.server.auth.TokenService
 import com.az.umirhackapp.server.inventory.InventoryRepository
+import com.az.umirhackapp.server.inventory.InventoryViewModel
 import com.az.umirhackapp.test.TestViewModel
 import com.az.umirhackapp.ui.Screen
 import com.az.umirhackapp.ui.screens.LoadingScreen
@@ -66,7 +67,7 @@ fun AppNavigation() {
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
 
     val inventoryRepository = InventoryRepository(NetworkModule.apiService, tokenService)
-    //val inventoryViewModel = viewModel { InventoryViewModel(inventoryRepository) }
+    val inventoryViewModel = viewModel { InventoryViewModel(inventoryRepository) }
 
     // TODO("")
     val testViewModel = viewModel { TestViewModel() }
@@ -150,7 +151,7 @@ fun AppNavigation() {
         composable(Screen.MAIN_ORGANIZATIONS.route) {
             MainScreen(
                 authViewModel.currentUser.value ?: User(0, "example@com", "Иванов Иван", null, null),
-                testViewModel,
+                inventoryViewModel,
                 label = Screen.MAIN_ORGANIZATIONS.title,
                 onProfileClick = {
                     navController.navigate(Screen.PROFILE.route)
@@ -163,15 +164,13 @@ fun AppNavigation() {
                 },
                 onBackClick = { navController.popBackStack() },
                 loadContent = {
-                    testViewModel.loadOrganizations()
+                    inventoryViewModel.loadOrganizations()
                               },
                 content = { searchText ->
                     LazyColumnItems(
-                        testViewModel.uiState.collectAsState().value.organizations,
+                        inventoryViewModel.uiState.collectAsState().value.organizations,
                         { org ->
-                            println(testViewModel.uiState.value.selectedOrganization)
-                            testViewModel.selectOrganization(org)
-                            println(testViewModel.uiState.value.selectedOrganization)
+                            inventoryViewModel.selectOrganization(org)
                             navController.navigate(Screen.MAIN_WAREHOUSES.route)
                         },
                         Screen.MAIN_ORGANIZATIONS,
@@ -184,7 +183,7 @@ fun AppNavigation() {
         composable(Screen.MAIN_WAREHOUSES.route) {
             MainScreen(
                 authViewModel.currentUser.value ?: User(0, "example@com", "Иванов Иван", null, null),
-                testViewModel,
+                inventoryViewModel,
                 label = Screen.MAIN_WAREHOUSES.title,
                 onProfileClick = {
                     navController.navigate(Screen.PROFILE.route)
@@ -197,17 +196,15 @@ fun AppNavigation() {
                 },
                 onBackClick = { navController.popBackStack() },
                 loadContent = {
-                    println(testViewModel.uiState.value.organizations)
-                    testViewModel.loadWarehouses(testViewModel.uiState.value.selectedOrganization!!.id)
-                    println(testViewModel.uiState.value.organizations)
+                    inventoryViewModel.loadWarehouses(inventoryViewModel.uiState.value.selectedOrganization!!.id)
                 },
                 content = { searchText ->
                     LazyColumnItems(
-                        testViewModel.uiState.collectAsState().value.warehouses,
+                        inventoryViewModel.uiState.collectAsState().value.warehouses,
                         { warehouse ->
-                            println(testViewModel.uiState.value.selectedWarehouse)
-                            testViewModel.selectWarehouse(warehouse)
-                            println(testViewModel.uiState.value.selectedWarehouse)
+                            println(inventoryViewModel.uiState.value.selectedWarehouse)
+                            inventoryViewModel.selectWarehouse(warehouse)
+                            println(inventoryViewModel.uiState.value.selectedWarehouse)
                             navController.navigate(Screen.MAIN_DOCUMENTS.route)
                         },
                         Screen.MAIN_WAREHOUSES,
@@ -220,7 +217,7 @@ fun AppNavigation() {
         composable(Screen.MAIN_DOCUMENTS.route) {
             MainScreen(
                 authViewModel.currentUser.value ?: User(0, "example@com", "Иванов Иван", null, null),
-                testViewModel,
+                inventoryViewModel,
                 label = Screen.MAIN_DOCUMENTS.title,
                 onProfileClick = {
                     navController.navigate(Screen.PROFILE.route)
@@ -233,16 +230,16 @@ fun AppNavigation() {
                 },
                 onBackClick = { navController.popBackStack() },
                 loadContent = {
-                    testViewModel.loadDocuments(
-                        testViewModel.uiState.value.selectedOrganization!!.id,
-                        testViewModel.uiState.value.selectedWarehouse!!.id
+                    inventoryViewModel.loadDocuments(
+                        inventoryViewModel.uiState.value.selectedOrganization!!.id,
+                        inventoryViewModel.uiState.value.selectedWarehouse!!.id
                     )
                 },
                 content = { searchText ->
                     LazyColumnItems(
-                        items = testViewModel.uiState.collectAsState().value.documents,
+                        items = inventoryViewModel.uiState.collectAsState().value.documents,
                         { document ->
-                            testViewModel.selectDocument(document)
+                            inventoryViewModel.selectDocument(document)
                             navController.navigate(Screen.MAIN_DOCUMENT_ITEMS.route)
                         },
                         Screen.MAIN_DOCUMENTS,
@@ -254,22 +251,17 @@ fun AppNavigation() {
 
         composable(Screen.MAIN_DOCUMENT_ITEMS.route) {
             DocumentItemsScreen(
-                viewModel = testViewModel,
-                selectedDocument = testViewModel.uiState.collectAsState().value.selectDocument!!,
+                viewModel = inventoryViewModel,
+                selectedDocument = inventoryViewModel.uiState.collectAsState().value.selectDocument!!,
                 onBackClick = {
                     navController.popBackStack()
                               },
                 onStartInventory = { oldDocument ->
-                    val newDocument = oldDocument.copy(status = "in_progress")
-                    testViewModel.updateDocument(newDocument)
+                    inventoryViewModel.updateDocumentStatus(oldDocument.id, "in_progress")
                                    },
                 onNotPermissionCamera = { navController.navigate(Screen.PERMISSION_REQUEST.route) },
                 onCompleteDocument = { oldDocument, documentItems ->
-                    val newDocument = oldDocument.copy(
-                        status = "completed",
-                        items = documentItems
-                    )
-                    testViewModel.updateDocument(newDocument)
+                    inventoryViewModel.updateDocumentStatus(oldDocument.id, "completed")
                     navController.popBackStack()
                 }
             )
@@ -321,7 +313,7 @@ fun AppNavigation() {
                     navController.popBackStack()
                 },
                 onCodeScanned = { barcode ->
-                    testViewModel.scanProduct(barcode)
+                    inventoryViewModel.scanProduct(barcode, {  })
                 },
                 onNotPermissionCamera = {
                     navController.navigate(Screen.PERMISSION_REQUEST.route)

@@ -40,7 +40,7 @@ interface ApiService {
     ): Response<ApiResponse<List<Warehouse>>>
 
     // Документы
-    @GET("api/documents")
+    @GET("api/documents/mobile")
     suspend fun getDocuments(
         @Header("Authorization") token: String,
         @Query("organizationId") organizationId: Int,
@@ -55,7 +55,7 @@ interface ApiService {
         @Path("documentId") documentId: Int
     ): Response<ApiResponse<Document>>
 
-    @POST("api/documents")
+    @POST("api/documents/mobile")
     suspend fun createDocument(
         @Header("Authorization") token: String,
         @Body request: CreateDocumentRequest
@@ -74,4 +74,11 @@ interface ApiService {
         @Path("documentId") documentId: Int,
         @Body status: String
     ): Response<ApiResponse<Document>>
+
+    @PUT("api/documents/{documentId}")
+    suspend fun updateDocument(
+        @Header("Authorization") token: String,
+        @Path("documentId") documentId: Int,
+        @Body document: Document
+    ) : Response<ApiResponse<Document>>
 }

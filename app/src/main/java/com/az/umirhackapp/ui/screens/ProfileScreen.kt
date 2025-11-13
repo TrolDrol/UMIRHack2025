@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -32,9 +32,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.az.umirhackapp.server.NetworkModule
-import com.az.umirhackapp.server.auth.AuthViewModel
 import com.az.umirhackapp.server.User
 import com.az.umirhackapp.server.auth.AuthRepository
+import com.az.umirhackapp.server.auth.AuthViewModel
 import com.az.umirhackapp.server.auth.TokenService
 import com.az.umirhackapp.ui.Screen
 import com.az.umirhackapp.ui.theme.AppTheme
@@ -62,7 +62,7 @@ fun ProfileScreen(
                     onClick = onBackClick,
                     content = {
                         Icon(
-                            Icons.Default.ArrowBack,
+                            Icons.AutoMirrored.Default.ArrowBack,
                             contentDescription = "Back Click",
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -88,6 +88,7 @@ fun ProfileScreen(
             }
         }
     ) { paddingValues ->
+        Background()
         Column(
             modifier = Modifier
                 .fillMaxSize()
