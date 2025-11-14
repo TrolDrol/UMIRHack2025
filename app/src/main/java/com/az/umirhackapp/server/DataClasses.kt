@@ -1,5 +1,6 @@
 package com.az.umirhackapp.server
 
+// Аутентификация
 data class AuthRequest(
     val email: String,
     val password: String,
@@ -13,13 +14,6 @@ data class AuthResponse(
     val user: User? = null
 )
 
-data class ApiResponse<T>(
-    val success: Boolean,
-    val data: T? = null,
-    val message: String? = null,
-    val error: String? = null
-)
-
 data class User(
     val id: Int,
     val email: String,
@@ -28,6 +22,21 @@ data class User(
     val organization: List<Organization>?
 )
 
+data class JoinOrganizationRequest(
+    val token: String,
+    val organizationId: Int
+)
+
+// Общий класс для ответов
+
+data class ApiResponse<T>(
+    val success: Boolean,
+    val data: T? = null,
+    val message: String? = null,
+    val error: String? = null
+)
+
+// Организации и склады
 data class Organization(
     val id: Int,
     val name: String,
@@ -45,6 +54,7 @@ data class Warehouse(
     val isActive: Boolean
 )
 
+// Продукты
 data class Product(
     val id: Int,
     val name: String,
@@ -53,6 +63,7 @@ data class Product(
     val organizationId: Int
 )
 
+// Документы
 data class Document(
     val id: Int,
     val type: String,
@@ -85,4 +96,9 @@ data class CreateDocumentRequest(
     val type: String,
     val documentDate: String,
     val warehouseId: Int
+)
+
+data class UpdateDocumentRequest(
+    val items: List<DocumentItem>,
+    val newItems: List<DocumentItem>
 )

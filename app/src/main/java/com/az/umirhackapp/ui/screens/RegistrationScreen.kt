@@ -1,16 +1,21 @@
 package com.az.umirhackapp.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -49,7 +54,8 @@ import kotlinx.coroutines.launch
 fun RegistrationScreen(
     authViewModel: AuthViewModel,
     onRegisterSuccess: () -> Unit,
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    systemInDarkTheme: Boolean = true
 ) {
     val authState by authViewModel.authState.collectAsState()
     var email by remember { mutableStateOf("") }
@@ -81,8 +87,8 @@ fun RegistrationScreen(
             SnackbarHost(hostState = snackBarHostState)
         }
     ) { paddingValues ->
-        Background()
-        Column(
+        Background(systemInDarkTheme)
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -90,84 +96,99 @@ fun RegistrationScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Заголовок
-            Text(
-                text = Screen.REGISTRATION.title,
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            item {
+                // Заголовок
+                Text(
+                    text = Screen.REGISTRATION.title,
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            // Поле для имени
-            OutlinedTextFieldDefault(
-                name,
-                {str -> name = str},
-                "Имя",
-                KeyboardOptions.Default,
-                PasswordVisualTransformation()
-            )
+                // Поле для имени
+                OutlinedTextFieldDefault(
+                    name,
+                    { str -> name = str },
+                    "Имя",
+                    KeyboardOptions.Default,
+                    null,
+                    null
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Поле для email
-            OutlinedTextFieldDefault(
-                email,
-                {str -> email = str},
-                "Email",
-                KeyboardOptions(keyboardType = KeyboardType.Email),
-                PasswordVisualTransformation()
-            )
+                // Поле для email
+                OutlinedTextFieldDefault(
+                    email,
+                    { str -> email = str },
+                    "Email",
+                    KeyboardOptions(keyboardType = KeyboardType.Email),
+                    null,
+                    null
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Поля для пароля и подтверждения
-            PasswordFields(password, confirmPassword)
+                // Поля для пароля и подтверждения
+                PasswordFields(password, confirmPassword)
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            // Кнопка регистрации
-            Button(
-                onClick = {
-                    if (validateRegistration(email, password.value, confirmPassword.value, name)) {
-                        authViewModel.register(email, password.value, name)
-                    } else {
-                        scope.launch {
-                            snackBarHostState.showSnackbar("Пожалуйста, заполните все поля корректно")
+                // Кнопка регистрации
+                Button(
+                    onClick = {
+                        if (validateRegistration(
+                                email,
+                                password.value,
+                                confirmPassword.value,
+                                name
+                            )
+                        ) {
+                            authViewModel.register(email, password.value, name)
+                        } else {
+                            scope.launch {
+                                snackBarHostState.showSnackbar("Пожалуйста, заполните все поля корректно")
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = validateRegistration(
+                        email,
+                        password.value,
+                        confirmPassword.value,
+                        name
+                    ) &&
+                            authState !is AuthState.Loading,
+                    content = {
+                        if (authState is AuthState.Loading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text(
+                                text = "Зарегистрироваться",
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = validateRegistration(email, password.value, confirmPassword.value, name) &&
-                        authState !is AuthState.Loading,
-                content = {
-                    if (authState is AuthState.Loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Ссылка на вход
+                TextButton(
+                    onClick = onLoginClick,
+                    content = {
                         Text(
-                            text = "Зарегистрироваться",
-                            style = MaterialTheme.typography.labelLarge
+                            text = "Уже есть аккаунт? Войти",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Ссылка на вход
-            TextButton(
-                onClick = onLoginClick,
-                content = {
-                    Text(
-                        text = "Уже есть аккаунт? Войти",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -190,12 +211,25 @@ fun PasswordFields(
     password: MutableState<String>,
     confirmPassword: MutableState<String>
 ) {
+    var passwordVisibility by remember { mutableStateOf(true) }
+    var passwordConfirmVisibility by remember { mutableStateOf(true) }
     OutlinedTextFieldDefault(
         password.value,
         {str -> password.value = str},
         "Пароль",
         KeyboardOptions(keyboardType = KeyboardType.Password),
-        PasswordVisualTransformation()
+        {
+            IconButton(
+                onClick = { passwordVisibility = !passwordVisibility },
+                content = {
+                    Icon(
+                        if (passwordVisibility) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (passwordVisibility) "VisibilityOff" else "Visibility"
+                    )
+                }
+            )
+        },
+        if (passwordVisibility) null else PasswordVisualTransformation()
     )
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -205,7 +239,20 @@ fun PasswordFields(
         {str -> confirmPassword.value = str},
         "Подтвердите пароль",
         KeyboardOptions(keyboardType = KeyboardType.Password),
-        PasswordVisualTransformation()
+        {
+            IconButton(
+                onClick = { passwordConfirmVisibility = !passwordConfirmVisibility },
+                content = {
+                    Icon(
+                        if (passwordConfirmVisibility)
+                            Icons.Default.VisibilityOff
+                        else Icons.Default.Visibility,
+                        contentDescription = if (passwordConfirmVisibility) "VisibilityOff" else "Visibility"
+                    )
+                }
+            )
+        },
+        if (passwordConfirmVisibility) null else PasswordVisualTransformation()
     )
 }
 
@@ -215,6 +262,7 @@ fun OutlinedTextFieldDefault(
     onValueChange: (String) -> Unit,
     label: String,
     keyboardOptions: KeyboardOptions,
+    trailingIcon: (@Composable () -> Unit)?,
     passwordVisualTransformation: PasswordVisualTransformation?
 ) {
     OutlinedTextField(
@@ -226,6 +274,7 @@ fun OutlinedTextFieldDefault(
                 style = MaterialTheme.typography.bodyLarge
             )
         },
+        trailingIcon = trailingIcon,
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         visualTransformation = passwordVisualTransformation ?: VisualTransformation.None,

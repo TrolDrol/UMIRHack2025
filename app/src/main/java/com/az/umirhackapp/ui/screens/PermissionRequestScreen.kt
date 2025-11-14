@@ -29,7 +29,8 @@ import com.az.umirhackapp.ui.theme.AppTheme
 fun PermissionRequestScreen(
     onBackClick: () -> Unit,
     onPermissionsGranted: () -> Unit,
-    onPermissionsDenied: () -> Unit
+    onPermissionsDenied: () -> Unit,
+    systemInDarkTheme: Boolean = true
 ) {
     val context = LocalContext.current
 
@@ -48,7 +49,7 @@ fun PermissionRequestScreen(
             onPermissionsDenied()
         }
     }
-
+    Background(systemInDarkTheme)
     Column(
         modifier = Modifier
             .fillMaxSize()

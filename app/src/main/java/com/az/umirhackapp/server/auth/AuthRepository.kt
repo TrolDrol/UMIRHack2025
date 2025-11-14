@@ -4,6 +4,7 @@ import com.az.umirhackapp.server.ApiResponse
 import com.az.umirhackapp.server.ApiService
 import com.az.umirhackapp.server.AuthRequest
 import com.az.umirhackapp.server.AuthResponse
+import com.az.umirhackapp.server.JoinOrganizationRequest
 import com.az.umirhackapp.server.Result
 import com.az.umirhackapp.server.User
 import retrofit2.Response
@@ -34,5 +35,9 @@ class AuthRepository(private val apiService: ApiService) {
 
     suspend fun getCurrentUser(token: String): Result<ApiResponse<User>> {
         return safeApiCall { apiService.getCurrentUser("Bearer $token") }
+    }
+
+    suspend fun invitationToOrganization(token: String, request: JoinOrganizationRequest): Result<ApiResponse<Unit>> {
+        return safeApiCall { apiService.invitationToOrganization("Bearer $token", request) }
     }
 }

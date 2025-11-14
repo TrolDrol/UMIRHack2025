@@ -1,13 +1,13 @@
 package com.az.umirhackapp.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,7 +47,8 @@ import kotlinx.coroutines.launch
 fun LoginScreen(
     authViewModel: AuthViewModel,
     onLoginSuccess: () -> Unit,
-    onRegisterClick: () -> Unit
+    onRegisterClick: () -> Unit,
+    systemInDarkTheme: Boolean = true
 ) {
     val authState by authViewModel.authState.collectAsState()
     var email by remember { mutableStateOf("") }
@@ -77,8 +78,8 @@ fun LoginScreen(
             SnackbarHost(hostState = snackBarHostState)
         }
     ) { paddingValues ->
-        Background()
-        Column(
+        Background(systemInDarkTheme)
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -86,92 +87,94 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Заголовок
-            Text(
-                text = Screen.LOGIN.title,
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            item {
+                // Заголовок
+                Text(
+                    text = Screen.LOGIN.title,
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            // Поле для email
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = {
-                    Text(
-                        text = "Email",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                isError = email.isNotEmpty() && !email.contains("@")
-            )
+                // Поле для email
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = {
+                        Text(
+                            text = "Email",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    isError = email.isNotEmpty() && !email.contains("@")
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Поле для пароля
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = {
-                    Text(
-                        text = "Пароль",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                isError = password.isNotEmpty() && password.length < 6
-            )
+                // Поле для пароля
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = {
+                        Text(
+                            text = "Пароль",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    isError = password.isNotEmpty() && password.length < 6
+                )
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            // Кнопка входа или индикатор загрузки
-            Button(
-                onClick = {
-                    if (validateLogin(email, password)) {
-                        authViewModel.login(email, password)
-                    } else {
-                        scope.launch {
-                            snackBarHostState.showSnackbar("Пожалуйста, заполните все поля корректно")
+                // Кнопка входа или индикатор загрузки
+                Button(
+                    onClick = {
+                        if (validateLogin(email, password)) {
+                            authViewModel.login(email, password)
+                        } else {
+                            scope.launch {
+                                snackBarHostState.showSnackbar("Пожалуйста, заполните все поля корректно")
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = validateLogin(email, password) && authState !is AuthState.Loading,
+                    content = {
+                        if (authState is AuthState.Loading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text(
+                                text = "Войти",
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = validateLogin(email, password) && authState !is AuthState.Loading,
-                content = {
-                    if (authState is AuthState.Loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Ссылка на регистрацию
+                TextButton(
+                    onClick = onRegisterClick,
+                    content = {
                         Text(
-                            text = "Войти",
-                            style = MaterialTheme.typography.labelLarge
+                            text = "Нет аккаунта? Зарегистрироваться",
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Ссылка на регистрацию
-            TextButton(
-                onClick = onRegisterClick,
-                content = {
-                    Text(
-                        text = "Нет аккаунта? Зарегистрироваться",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            )
+                )
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ package com.az.umirhackapp.server.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.az.umirhackapp.server.AuthResponse
+import com.az.umirhackapp.server.JoinOrganizationRequest
 import com.az.umirhackapp.server.Result
 import com.az.umirhackapp.server.User
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,7 +62,6 @@ class AuthViewModel(
                     result.data.token?.let { token ->
                         tokenService.saveAuthToken(token)
                     }
-                    loadCurrentUser()
                     _authState.value = AuthState.Success(result.data)
                     _isLoggedIn.value = true
                 }
@@ -85,6 +85,34 @@ class AuthViewModel(
                         if (result.exception.message?.contains("401") == true) {
                             logout()
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    fun invitationToOrganization(organizationString: String) {
+        val token = tokenService.getAuthToken()
+        if (token != null) {
+            val organizationTokenIndex = organizationString.indexOf("organizationToken=")
+            val organizationIdIndex = organizationString.indexOf("organizationId=")
+
+            if (organizationTokenIndex == -1 || organizationIdIndex == -1) {
+                _authState.value = AuthState.Error("Неверный QR")
+                return
+            }
+
+            val organizationId = organizationString.substring((organizationIdIndex + 15)..(organizationTokenIndex - 1)).toInt()
+            val organizationToken = organizationString.substring((organizationTokenIndex + 18)..organizationString.length - 1)
+
+            val request = JoinOrganizationRequest(organizationToken, organizationId)
+            viewModelScope.launch {
+                when (val result = authRepository.invitationToOrganization(token, request)) {
+                    is Result.Success -> {
+
+                    }
+                    is Result.Failure -> {
+                        _authState.value = AuthState.Error("Не удалось присоединиться к организации")
                     }
                 }
             }

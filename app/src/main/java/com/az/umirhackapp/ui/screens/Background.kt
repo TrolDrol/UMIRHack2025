@@ -1,11 +1,12 @@
 package com.az.umirhackapp.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -22,9 +23,11 @@ import com.az.umirhackapp.ui.theme.dark_700
 import com.az.umirhackapp.ui.theme.dark_800
 
 @Composable
-fun Background() {
+fun Background(
+    systemInDarkTheme: Boolean
+) {
     // Красивый градиентный фон
-    val backgroundGradient = if (isSystemInDarkTheme()) {
+    val backgroundGradient = if (systemInDarkTheme) {
         Brush.verticalGradient(
             colors = listOf(
                 blue_900,
@@ -48,7 +51,7 @@ fun Background() {
             .fillMaxSize()
             .background(backgroundGradient)
     ) {
-        if (!isSystemInDarkTheme()) {
+        if (!systemInDarkTheme) {
             // Большой голубой круг
             Box(
                 modifier = Modifier
@@ -91,7 +94,7 @@ fun Background() {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .size(250.dp)
+                    .size(300.dp)
                     .background(
                         brush = Brush.radialGradient(
                             colors = listOf(blue_700, Color.Transparent),
@@ -103,7 +106,7 @@ fun Background() {
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .size(180.dp)
+                    .size(200.dp)
                     .background(
                         brush = Brush.radialGradient(
                             colors = listOf(blue_900, Color.Transparent),
@@ -118,7 +121,8 @@ fun Background() {
 @Preview(showSystemUi = true)
 @Composable
 fun PreviewBackground() {
+    val systemInDarkTheme = remember { mutableStateOf(true) }
     AppTheme {
-        Background()
+        Background(systemInDarkTheme.value)
     }
 }

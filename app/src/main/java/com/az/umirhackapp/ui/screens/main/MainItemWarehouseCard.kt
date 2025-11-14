@@ -29,7 +29,7 @@ fun MainItemWarehouseCard(
                 modifier = Modifier.padding(16.dp),
                 content = {
                     Text(
-                        text = item.name,
+                        text = "Название: " + item.name,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.SemiBold
@@ -39,11 +39,18 @@ fun MainItemWarehouseCard(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = item.address,
+                            text = "Адрес: " + item.address,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Состояние: " + if (item.isActive) "Открыт" else "Закрыт",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             )
         }

@@ -31,6 +31,7 @@ import com.az.umirhackapp.server.DocumentItem
 @Composable
 fun DocumentItemsList(
     documentItems: MutableState<List<DocumentItem>>,
+    newDocumentItems: MutableState<List<DocumentItem>>,
     selectedDocument: Document
 ) {
     println("documentItems: ${documentItems.value}")
@@ -38,11 +39,7 @@ fun DocumentItemsList(
         modifier = Modifier.fillMaxSize()
     ) {
         items(documentItems.value.size) { ind ->
-            println("1. DocumentItemsList: $ind")
-            println("2. DocumentItemsList: ${documentItems.value}")
-            println("3. DocumentItemsList: ${documentItems.value[ind]}")
             val itemState = mutableStateOf(documentItems.value[ind])
-            println("4. DocumentItemsList: ${itemState.value}")
             DocumentItemCard(
                 documentItem = itemState,
                 isEditable = selectedDocument.status == "in_progress",
@@ -54,7 +51,20 @@ fun DocumentItemsList(
             )
         }
 
-        if (documentItems.value.isEmpty()) {
+        items(newDocumentItems.value.size) { ind ->
+            val itemState = mutableStateOf(newDocumentItems.value[ind])
+            DocumentItemCard(
+                documentItem = itemState,
+                isEditable = selectedDocument.status == "in_progress",
+                onEditeDocumentItem = { documentItem ->
+                    val new = newDocumentItems.value.toMutableList()
+                    new[ind] = documentItem
+                    newDocumentItems.value = new
+                }
+            )
+        }
+
+        if (documentItems.value.isEmpty() && newDocumentItems.value.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier
@@ -64,7 +74,7 @@ fun DocumentItemsList(
                 ) {
                     Text(
                         "Нет товаров в документе",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

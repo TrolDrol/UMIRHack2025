@@ -8,7 +8,6 @@ import com.az.umirhackapp.server.Organization
 import com.az.umirhackapp.server.Product
 import com.az.umirhackapp.server.Result
 import com.az.umirhackapp.server.Warehouse
-import com.az.umirhackapp.test.documentItems
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -81,7 +80,7 @@ class InventoryViewModel(
     }
 
     // Загрузка документов
-    fun loadDocuments(organizationId: Int, warehouseId: Int? = null) {
+    fun loadDocuments(organizationId: Int, warehouseId: Int) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = repository.getDocuments(organizationId, warehouseId)) {
@@ -99,24 +98,6 @@ class InventoryViewModel(
         }
     }
 
-    // Добавление продукта в документ
-    fun addNewDocumentItemToDocument(item: DocumentItem) {
-        _uiState.value = _uiState.value.copy(isLoading = true)
-
-        val newItemList = _uiState.value.selectDocument!!.items.toMutableList()
-
-        val itemWithId = item.copy(id = documentItems.size + 1)
-        newItemList.add(itemWithId)
-
-        val newList = documentItems.toMutableList()
-        newList.add(itemWithId)
-        documentItems = newList
-
-        _uiState.value.selectDocument?.items = newItemList
-
-        _uiState.value = _uiState.value.copy(isLoading = false)
-    }
-
     // Создание нового документа
     fun createDocument(type: String, warehouseId: Int) {
         viewModelScope.launch {
@@ -128,7 +109,8 @@ class InventoryViewModel(
                         error = null,
                         successMessage = "Документ создан"
                     )
-                    loadDocuments(_uiState.value.selectedOrganization?.id ?: return@launch)
+                    loadDocuments(_uiState.value.selectedOrganization?.id ?: return@launch,
+                        _uiState.value.selectedWarehouse?.id ?: return@launch)
                 }
                 is Result.Failure -> {
                     _uiState.value = _uiState.value.copy(error = result.exception.message)
@@ -143,6 +125,31 @@ class InventoryViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             when(val result = repository.updateDocumentStatus(documentId, status)) {
+                is Result.Success -> {
+                    if (result.data.success) {
+                        _uiState.value = _uiState.value.copy(error = null)
+                        loadDocuments(
+                            _uiState.value.selectedOrganization!!.id,
+                            _uiState.value.selectedWarehouse!!.id
+                        )
+                    }
+                    else
+                        _uiState.value = _uiState.value.copy(error = result.data.error)
+                }
+                is Result.Failure -> {
+                    _uiState.value = _uiState.value.copy(error = result.exception.message)
+                }
+            }
+
+            _uiState.value = _uiState.value.copy(isLoading = false)
+        }
+    }
+
+    fun updateDocumentItems(documentId: Int, oldItems: List<DocumentItem>, newItems: List<DocumentItem>) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            when(val result = repository.updateDocumentItems(documentId, oldItems, newItems)) {
                 is Result.Success -> {
                     if (result.data.success) {
                         _uiState.value = _uiState.value.copy(error = null)

@@ -1,5 +1,7 @@
 package com.az.umirhackapp.ui.screens
 
+import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,9 +13,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Card
@@ -32,20 +35,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.az.umirhackapp.ui.Screen
 import com.az.umirhackapp.ui.theme.AppTheme
+import androidx.core.content.edit
 
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
+    systemInDarkTheme: Boolean,
+    onChangeColorSheme: () -> Unit,
     onLanguageClick: () -> Unit,
     onPrivacyClick: () -> Unit,
     onStorageClick: () -> Unit
 ) {
     var notificationsEnabled by remember { mutableStateOf(false) }
-    var darkThemeEnabled by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -59,7 +65,7 @@ fun SettingsScreen(
                     onClick = onBackClick,
                     content = {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
                             contentDescription = "Назад"
                         )
                     }
@@ -75,6 +81,7 @@ fun SettingsScreen(
             }
         }
     ) { paddingValues ->
+        Background(systemInDarkTheme)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -102,13 +109,19 @@ fun SettingsScreen(
             // Секция внешнего вида
             SettingsSection(title = "Внешний вид") {
                 SettingsItem(
-                    icon = Icons.Default.DarkMode,
-                    title = "Тёмная тема",
-                    description = "Включить тёмную тему приложения"
+                    icon = if (systemInDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
+                    title = if (systemInDarkTheme) "Тёмная тема" else "Светлая тема",
+                    description = "Включить ${if (systemInDarkTheme) "светлую" else "тёмную"} тему приложения"
                 ) {
+                    val context = LocalContext.current
                     Switch(
-                        checked = darkThemeEnabled,
-                        onCheckedChange = { darkThemeEnabled = it },
+                        checked = systemInDarkTheme,
+                        onCheckedChange = {
+                            println("SettingsScreen: ${systemInDarkTheme}")
+                            saveColorTheme(context, !systemInDarkTheme)
+                            onChangeColorSheme()
+                            println("SettingsScreen: ${systemInDarkTheme}")
+                                          },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = MaterialTheme.colorScheme.primary,
                             checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
@@ -128,7 +141,7 @@ fun SettingsScreen(
                         onClick = onLanguageClick,
                         content = {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
                                 contentDescription = "Перейти",
                                 modifier = Modifier
                             )
@@ -145,7 +158,7 @@ fun SettingsScreen(
                         onClick = onStorageClick,
                         content = {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Default.ArrowBack,
                                 contentDescription = "Перейти",
                                 modifier = Modifier
                             )
@@ -265,10 +278,19 @@ fun SettingsItem(
     }
 }
 
+fun saveColorTheme(context: Context, value: Boolean) {
+    context.getSharedPreferences("ColorTheme", MODE_PRIVATE).edit() {
+        putBoolean("Dark", value)
+    }
+}
+
 @Preview(showSystemUi = true)
 @Composable
 fun PreviewSettingsScreen() {
-    AppTheme {
+    val systemInDarkTheme = remember { mutableStateOf(true) }
+    AppTheme(
+        systemInDarkTheme.value
+    ) {
         SettingsScreen(
             onBackClick = {
             },
@@ -280,6 +302,10 @@ fun PreviewSettingsScreen() {
             },
             onStorageClick = {
                 // В будущем можно добавить экран управления хранилищем
+            },
+            systemInDarkTheme = systemInDarkTheme.value,
+            onChangeColorSheme = {
+                systemInDarkTheme.value = !systemInDarkTheme.value
             }
         )
     }

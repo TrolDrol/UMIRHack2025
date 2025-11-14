@@ -4,11 +4,13 @@ import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +22,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.az.umirhackapp.email.EmailViewModel
+import com.az.umirhackapp.email.ReportGenerator
 import com.az.umirhackapp.server.NetworkModule
 import com.az.umirhackapp.server.User
 import com.az.umirhackapp.server.auth.AuthRepository
@@ -45,12 +49,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            AppTheme {
+            val prefsColor = LocalContext.current.getSharedPreferences("ColorTheme", MODE_PRIVATE).getBoolean("Dark", isSystemInDarkTheme())
+            val systemInDarkTheme = remember { mutableStateOf(prefsColor) }
+
+            AppTheme(
+                darkTheme = systemInDarkTheme.value
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation()
+                    AppNavigation(
+                        systemInDarkTheme = systemInDarkTheme
+                    )
                 }
             }
         }
@@ -58,7 +69,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(systemInDarkTheme: MutableState<Boolean>) {
     val context = LocalContext.current
     val authRepository = AuthRepository(NetworkModule.apiService)
     val tokenService = TokenService(context)
@@ -68,6 +79,9 @@ fun AppNavigation() {
 
     val inventoryRepository = InventoryRepository(NetworkModule.apiService, tokenService)
     val inventoryViewModel = viewModel { InventoryViewModel(inventoryRepository) }
+
+    val reportGenerator = ReportGenerator(LocalContext.current)
+    val emailViewModel = viewModel { EmailViewModel(reportGenerator) }
 
     // TODO("")
     val testViewModel = viewModel { TestViewModel() }
@@ -112,7 +126,8 @@ fun AppNavigation() {
         composable(Screen.LOADING.route) {
             LoadingScreen(
                 message = "Загружаем приложение...",
-                subMessage = "Пожалуйста, подождите"
+                subMessage = "Пожалуйста, подождите",
+                systemInDarkTheme = systemInDarkTheme.value
             )
         }
 
@@ -127,7 +142,8 @@ fun AppNavigation() {
                 },
                 onLoginClick = {
                     navController.navigate(Screen.LOGIN.route)
-                }
+                },
+                systemInDarkTheme = systemInDarkTheme.value
             )
         }
 
@@ -143,7 +159,8 @@ fun AppNavigation() {
                 },
                 onRegisterClick = {
                     navController.navigate(Screen.REGISTRATION.route)
-                }
+                },
+                systemInDarkTheme = systemInDarkTheme.value
             )
         }
 
@@ -166,6 +183,7 @@ fun AppNavigation() {
                 loadContent = {
                     inventoryViewModel.loadOrganizations()
                               },
+                systemInDarkTheme = systemInDarkTheme.value,
                 content = { searchText ->
                     LazyColumnItems(
                         inventoryViewModel.uiState.collectAsState().value.organizations,
@@ -198,13 +216,12 @@ fun AppNavigation() {
                 loadContent = {
                     inventoryViewModel.loadWarehouses(inventoryViewModel.uiState.value.selectedOrganization!!.id)
                 },
+                systemInDarkTheme = systemInDarkTheme.value,
                 content = { searchText ->
                     LazyColumnItems(
                         inventoryViewModel.uiState.collectAsState().value.warehouses,
                         { warehouse ->
-                            println(inventoryViewModel.uiState.value.selectedWarehouse)
                             inventoryViewModel.selectWarehouse(warehouse)
-                            println(inventoryViewModel.uiState.value.selectedWarehouse)
                             navController.navigate(Screen.MAIN_DOCUMENTS.route)
                         },
                         Screen.MAIN_WAREHOUSES,
@@ -235,6 +252,7 @@ fun AppNavigation() {
                         inventoryViewModel.uiState.value.selectedWarehouse!!.id
                     )
                 },
+                systemInDarkTheme = systemInDarkTheme.value,
                 content = { searchText ->
                     LazyColumnItems(
                         items = inventoryViewModel.uiState.collectAsState().value.documents,
@@ -252,6 +270,7 @@ fun AppNavigation() {
         composable(Screen.MAIN_DOCUMENT_ITEMS.route) {
             DocumentItemsScreen(
                 viewModel = inventoryViewModel,
+                emailViewModel = emailViewModel,
                 selectedDocument = inventoryViewModel.uiState.collectAsState().value.selectDocument!!,
                 onBackClick = {
                     navController.popBackStack()
@@ -263,7 +282,8 @@ fun AppNavigation() {
                 onCompleteDocument = { oldDocument, documentItems ->
                     inventoryViewModel.updateDocumentStatus(oldDocument.id, "completed")
                     navController.popBackStack()
-                }
+                },
+                systemInDarkTheme = systemInDarkTheme.value
             )
         }
 
@@ -278,14 +298,15 @@ fun AppNavigation() {
                     // В будущем можно добавить экран редактирования профиля
                 },
                 onLogoutClick = {
-                    authViewModel.logout()
                     navController.navigate(Screen.REGISTRATION.route) {
                         popUpTo(Screen.MAIN_ORGANIZATIONS.route) { inclusive = true }
                     }
+                    authViewModel.logout()
                 },
                 onBackClick = {
                     navController.popBackStack()
-                }
+                },
+                systemInDarkTheme = systemInDarkTheme.value
             )
         }
 
@@ -294,6 +315,10 @@ fun AppNavigation() {
             SettingsScreen(
                 onBackClick = {
                     navController.popBackStack()
+                },
+                systemInDarkTheme = systemInDarkTheme.value,
+                onChangeColorSheme = {
+                    systemInDarkTheme.value = !systemInDarkTheme.value
                 },
                 onLanguageClick = {
                     // В будущем можно добавить экран выбора языка
@@ -309,15 +334,17 @@ fun AppNavigation() {
 
         composable(Screen.QR_SCANNER.route) {
             QRScannerScreen(
+                authViewModel = authViewModel,
                 onBackClick = {
                     navController.popBackStack()
                 },
                 onCodeScanned = { barcode ->
-                    inventoryViewModel.scanProduct(barcode, {  })
+                    authViewModel.invitationToOrganization(barcode)
                 },
                 onNotPermissionCamera = {
                     navController.navigate(Screen.PERMISSION_REQUEST.route)
-                }
+                },
+                systemInDarkTheme = systemInDarkTheme.value
             )
         }
 
@@ -335,8 +362,11 @@ fun AppNavigation() {
                     }
                 },
                 onPermissionsDenied = {
-
-                }
+                    navController.navigate(Screen.PERMISSION_REQUEST.route) {
+                        popUpTo(Screen.PERMISSION_REQUEST.route) { inclusive = true }
+                    }
+                },
+                systemInDarkTheme = systemInDarkTheme.value
             )
         }
     }

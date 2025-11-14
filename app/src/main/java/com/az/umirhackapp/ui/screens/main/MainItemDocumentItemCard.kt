@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.az.umirhackapp.server.DocumentItem
 import com.az.umirhackapp.server.Product
 
+@Deprecated("Использую отдельный экран для этого, но пусть будет")
 @Composable
 fun MainItemDocumentItemCard(
     item: DocumentItem,

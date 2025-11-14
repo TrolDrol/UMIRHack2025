@@ -20,10 +20,15 @@ import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +43,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.az.umirhackapp.server.NetworkModule
+import com.az.umirhackapp.server.auth.AuthState
+import com.az.umirhackapp.server.auth.AuthViewModel
 import com.az.umirhackapp.server.auth.TokenService
 import com.az.umirhackapp.server.inventory.InventoryRepository
 import com.az.umirhackapp.server.inventory.InventoryViewModel
@@ -51,12 +58,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.Boolean
 
 @Composable
 fun QRScannerScreen(
+    authViewModel: AuthViewModel = viewModel(),
     onBackClick: () -> Unit,
     onCodeScanned: (String) -> Unit,
-    onNotPermissionCamera: () -> Unit
+    onNotPermissionCamera: () -> Unit,
+    systemInDarkTheme: Boolean = true,
 ) {
     val context = LocalContext.current
 
@@ -67,8 +77,10 @@ fun QRScannerScreen(
 
     if (cameraPermission) {
         ScannerContent(
+            authViewModel = authViewModel,
             onBackClick = onBackClick,
-            onCodeScanned = onCodeScanned
+            onCodeScanned = onCodeScanned,
+            systemInDarkTheme = systemInDarkTheme
         )
     } else {
         onNotPermissionCamera()
@@ -77,30 +89,51 @@ fun QRScannerScreen(
 
 @Composable
 fun ScannerContent(
+    authViewModel: AuthViewModel = viewModel(),
     onBackClick: () -> Unit,
-    onCodeScanned: (String) -> Unit
+    onCodeScanned: (String) -> Unit,
+    systemInDarkTheme: Boolean = true,
 ) {
     var lastScannedCode = remember { mutableStateOf("") }
     val barcodeView = createDecoratedBarcodeView(LocalContext.current)
     var scanEnabled = remember { mutableStateOf(true) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        CameraScanner(
-            barcodeView,
-            lastScannedCode,
-            scanEnabled,
-            onCodeScanned
-        )
-        TopBarQRScanner(
-            onBackClick,
-            Modifier.align(Alignment.TopCenter)
-        )
-        BottomBarQRScanner(
-            barcodeView,
-            lastScannedCode.value,
-            Modifier.align(Alignment.BottomCenter)
-        )
+    val authUiState by authViewModel.authState.collectAsState()
+    val snackBarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(authUiState) {
+        when(authUiState) {
+            is AuthState.Error -> { snackBarHostState.showSnackbar((authUiState as AuthState.Error).message) }
+            AuthState.Idle -> {}
+            AuthState.Loading -> {}
+            is AuthState.Success -> { snackBarHostState.showSnackbar((authUiState as AuthState.Success).data.message.toString()) }
+        }
     }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackBarHostState) },
+        topBar = {
+            TopBarQRScanner(onBackClick)
+        },
+        bottomBar = {
+            BottomBarQRScanner(
+                barcodeView,
+                lastScannedCode.value
+            )
+        }
+    ) { paddingValue ->
+        Box(Modifier.fillMaxSize().padding(paddingValue)) {
+            Background(systemInDarkTheme)
+            CameraScanner(
+                barcodeView,
+                lastScannedCode,
+                scanEnabled,
+                onCodeScanned
+            )
+        }
+    }
+
 
     // Управление жизненным циклом сканера
     DisposableEffect(Unit) {
@@ -117,7 +150,7 @@ fun ScannerContent(
 @Composable
 fun TopBarQRScanner(
     onBackClick: () -> Unit,
-    modifier: Modifier
+    modifier: Modifier = Modifier
 ) {
     Row(
         Modifier
@@ -150,7 +183,7 @@ fun TopBarQRScanner(
 fun BottomBarQRScanner(
     barcodeView: DecoratedBarcodeView,
     lastScannedCode: String,
-    modifier: Modifier
+    modifier: Modifier = Modifier
 ) {
     var torchEnabled by remember { mutableStateOf(false) }
     Column(

@@ -24,10 +24,6 @@ enum class Screen(
         route = "settings",
         title = "Настройки"
     ),
-    MAIN(
-        route = "main",
-        title = "Главная"
-    ),
     MAIN_ORGANIZATIONS(
         route = "main/organizations",
         title = "Организации"

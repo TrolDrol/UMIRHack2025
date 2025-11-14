@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -41,6 +41,7 @@ fun MainScreen(
     onQRScannerClick: () -> Unit,
     onBackClick: () -> Unit,
     loadContent: () -> Unit,
+    systemInDarkTheme: Boolean = true,
     content: @Composable ((String) -> Unit)
 ) {
     LaunchedEffect(Unit) {
@@ -72,7 +73,7 @@ fun MainScreen(
             ScanFloatingActionButton(onQRScannerClick)
         }
     ) { paddingValues ->
-        Background()
+        Background(systemInDarkTheme)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -90,7 +91,7 @@ fun MainScreen(
                         onClick = { onBackClick() },
                         content = {
                             Icon(
-                                Icons.Default.ArrowBack,
+                                Icons.AutoMirrored.Default.ArrowBack,
                                 contentDescription = "Назад",
                                 tint = MaterialTheme.colorScheme.primary
                             )

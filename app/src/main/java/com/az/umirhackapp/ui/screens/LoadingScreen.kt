@@ -27,8 +27,10 @@ fun LoadingScreen(
     subMessage: String = "",
     progressIndicatorSize: Dp = 64.dp,
     strokeWidth: Dp = 4.dp,
+    systemInDarkTheme: Boolean = true,
     content: (() -> Unit) = { }
 ) {
+    Background(systemInDarkTheme)
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,

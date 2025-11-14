@@ -25,6 +25,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.az.umirhackapp.email.EmailViewModel
+import com.az.umirhackapp.ui.dialogs.SendReportDialog
 import com.az.umirhackapp.server.Document
 import com.az.umirhackapp.server.DocumentItem
 import com.az.umirhackapp.server.inventory.InventoryViewModel
@@ -33,6 +35,7 @@ import com.az.umirhackapp.ui.dialogs.AddNewItemToDocumentDialog
 import com.az.umirhackapp.ui.dialogs.CompleteDocumentDialog
 import com.az.umirhackapp.ui.dialogs.NotExistProductDialog
 import com.az.umirhackapp.ui.dialogs.OnBackClickDocumentItemsScreenDialog
+import com.az.umirhackapp.ui.screens.Background
 import com.az.umirhackapp.ui.screens.CameraScanner
 import com.az.umirhackapp.ui.screens.createDecoratedBarcodeView
 import com.az.umirhackapp.ui.theme.AppTheme
@@ -41,11 +44,13 @@ import com.az.umirhackapp.ui.theme.AppTheme
 @Composable
 fun DocumentItemsScreen(
     viewModel: InventoryViewModel = viewModel(),
+    emailViewModel: EmailViewModel = viewModel(),
     selectedDocument: Document,
     onBackClick: () -> Unit,
     onStartInventory: (Document) -> Unit,
     onNotPermissionCamera: () -> Unit,
-    onCompleteDocument: (Document, List<DocumentItem>) -> Unit
+    onCompleteDocument: (Document, List<DocumentItem>) -> Unit,
+    systemInDarkTheme: Boolean = true
 ) {
     val visibilityScaffold = remember { mutableFloatStateOf(1f) }
 
@@ -53,11 +58,13 @@ fun DocumentItemsScreen(
     var showAddNewItemToDocumentDialog by remember { mutableStateOf(false) }
     var showNotExistProductDialog by remember { mutableStateOf(false) }
     var showOnBackClickDocumentItemsScreenDialog by remember { mutableStateOf(false) }
+    var showSendReportDialog by remember { mutableStateOf(false) }
 
     var selectedDocumentState by remember { mutableStateOf(selectedDocument) }
     val scannedProduct by viewModel.scannedProduct.collectAsState()
     var documentItems = remember { mutableStateOf(selectedDocumentState.items) }
     var newDocumentItem = remember { mutableStateOf<DocumentItem?>(null) }
+    var newDocumentItems = remember { mutableStateOf(emptyList<DocumentItem>()) }
 
     val barcodeView = createDecoratedBarcodeView(LocalContext.current)
     val lastScannedCode = remember { mutableStateOf("") }
@@ -155,12 +162,15 @@ fun DocumentItemsScreen(
                     visibilityScaffold = visibilityScaffold,
                     onStartInventory = {document ->
                         onStartInventory(document)
+                        selectedDocumentState = selectedDocumentState.copy(status = "in_progress")
                         println("selectedDocument: $selectedDocument")
                     },
-                    onCompleteClick = { showCompletionDialog = true }
+                    onCompleteClick = { showCompletionDialog = true },
+                    onSendReport = { showSendReportDialog = true }
                 )
             }
         ) { paddingValues ->
+            Background(systemInDarkTheme)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -172,6 +182,7 @@ fun DocumentItemsScreen(
                 // Список товаров
                 DocumentItemsList(
                     documentItems = documentItems,
+                    newDocumentItems = newDocumentItems,
                     selectedDocument = selectedDocumentState
                 )
             }
@@ -191,10 +202,9 @@ fun DocumentItemsScreen(
                 AddNewItemToDocumentDialog(
                     newDocumentItem,
                     {
-                        val newList = documentItems.value.toMutableList()
+                        val newList = newDocumentItems.value.toMutableList()
                         newList.add(newDocumentItem.value!!)
-                        documentItems.value = newList
-                        viewModel.addNewDocumentItemToDocument(newDocumentItem.value!!)
+                        newDocumentItems.value = newList
                         newDocumentItem.value = null
                         showAddNewItemToDocumentDialog = false
                     },
@@ -213,11 +223,23 @@ fun DocumentItemsScreen(
             if (showOnBackClickDocumentItemsScreenDialog)
                 OnBackClickDocumentItemsScreenDialog(
                     {
+                        viewModel.updateDocumentItems(selectedDocument.id, documentItems.value, newDocumentItems.value)
                         showOnBackClickDocumentItemsScreenDialog = false
                         onBackClick()
                     },
                     {
                         showOnBackClickDocumentItemsScreenDialog = false
+                    }
+                )
+            if (showSendReportDialog)
+                SendReportDialog(
+                    document = selectedDocument,
+                    onDismiss = {
+                        showSendReportDialog = false
+                    },
+                    onConfirm = { email, includePDF, includeCSV ->
+                        emailViewModel.sendReport(selectedDocumentState, email, includePDF, includeCSV)
+                        showSendReportDialog = false
                     }
                 )
         }
@@ -228,12 +250,12 @@ fun DocumentItemsScreen(
 @Composable
 fun PreviewDocumentItemsScreen() {
     AppTheme {
-    DocumentItemsScreen(
-        selectedDocument = documents[1],
-        onBackClick = {  },
-        onNotPermissionCamera = {  },
-        onStartInventory = {  },
-        onCompleteDocument = { document, list -> }
-    )
+        DocumentItemsScreen(
+            selectedDocument = documents[1],
+            onBackClick = {  },
+            onNotPermissionCamera = {  },
+            onStartInventory = {  },
+            onCompleteDocument = { document, list -> }
+        )
         }
 }

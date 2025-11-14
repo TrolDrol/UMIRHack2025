@@ -45,7 +45,8 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
     onEditProfileClick: () -> Unit,
     onLogoutClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    systemInDarkTheme: Boolean = true
 ) {
     val currentUser by authViewModel.currentUser.collectAsState()
 
@@ -88,7 +89,7 @@ fun ProfileScreen(
             }
         }
     ) { paddingValues ->
-        Background()
+        Background(systemInDarkTheme)
         Column(
             modifier = Modifier
                 .fillMaxSize()

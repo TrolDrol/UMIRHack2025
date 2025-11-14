@@ -20,6 +20,12 @@ interface ApiService {
     @GET("api/user/profile")
     suspend fun getCurrentUser(@Header("Authorization") token: String): Response<ApiResponse<User>>
 
+    @GET("api/auth/invitation/join")
+    suspend fun invitationToOrganization(
+        @Header("Authorization") token: String,
+        @Body request: JoinOrganizationRequest
+    ): Response<ApiResponse<Unit>>
+
     // Продукты
     @GET("api/products/barcode/{barcode}")
     suspend fun getProduct(
@@ -44,9 +50,7 @@ interface ApiService {
     suspend fun getDocuments(
         @Header("Authorization") token: String,
         @Query("organizationId") organizationId: Int,
-        @Query("warehouseId") warehouseId: Int? = null,
-        @Query("type") type: String? = null,
-        @Query("status") status: String? = null
+        @Query("warehouseId") warehouseId: Int
     ): Response<ApiResponse<List<Document>>>
 
     @GET("api/documents/{documentId}")
@@ -75,10 +79,10 @@ interface ApiService {
         @Body status: String
     ): Response<ApiResponse<Document>>
 
-    @PUT("api/documents/{documentId}")
-    suspend fun updateDocument(
+    @PUT("api/documents/updateDocumentItems/{documentId}")
+    suspend fun updateDocumentItems(
         @Header("Authorization") token: String,
         @Path("documentId") documentId: Int,
-        @Body document: Document
+        @Body updateDocumentRequest: UpdateDocumentRequest
     ) : Response<ApiResponse<Document>>
 }

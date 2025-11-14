@@ -40,7 +40,12 @@ fun DocumentHeader(
             ) {
                 Column {
                     Text("Склад: ${selectedDocument.warehouse?.name ?: "Не указан"}")
-                    Text("Дата: ${selectedDocument.documentDate.substring(0..19)}")
+                    Text("Дата: ${
+                        if (selectedDocument.documentDate.length >= 18)
+                            selectedDocument.documentDate.substring(0..18)
+                        else
+                            selectedDocument.documentDate
+                    }")
                 }
                 Text(
                     getStatusText(selectedDocument.status),

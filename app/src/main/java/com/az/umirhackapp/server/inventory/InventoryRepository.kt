@@ -4,9 +4,11 @@ import com.az.umirhackapp.server.ApiResponse
 import com.az.umirhackapp.server.ApiService
 import com.az.umirhackapp.server.CreateDocumentRequest
 import com.az.umirhackapp.server.Document
+import com.az.umirhackapp.server.DocumentItem
 import com.az.umirhackapp.server.Organization
 import com.az.umirhackapp.server.Product
 import com.az.umirhackapp.server.Result
+import com.az.umirhackapp.server.UpdateDocumentRequest
 import com.az.umirhackapp.server.Warehouse
 import com.az.umirhackapp.server.auth.TokenService
 import retrofit2.Response
@@ -19,14 +21,12 @@ class InventoryRepository(
         return try {
             val response = apiCall()
             if (response.isSuccessful && response.body() != null) {
-                println("safeApiCall: isSuccessful" + response.body())
                 Result.Success(response.body()!!)
             } else {
                 println("safeApiCall: Failure")
                 Result.Failure(Exception("API Error: ${response.code()}"))
             }
         } catch (e: Exception) {
-            println("safeApiCall: $e")
             Result.Failure(e)
         }
     }
@@ -50,13 +50,11 @@ class InventoryRepository(
     // Документы
     suspend fun getDocuments(
         organizationId: Int,
-        warehouseId: Int? = null,
-        type: String? = null,
-        status: String? = null
+        warehouseId: Int
     ): Result<ApiResponse<List<Document>>> {
         val token = tokenService.getAuthToken() ?: return Result.Failure(Exception("No token"))
         return safeApiCall {
-            apiService.getDocuments("Bearer $token", organizationId, warehouseId, type, status)
+            apiService.getDocuments("Bearer $token", organizationId, warehouseId)
         }
     }
 
@@ -71,6 +69,14 @@ class InventoryRepository(
         val token = tokenService.getAuthToken() ?: return Result.Failure(Exception("No token"))
         return safeApiCall {
             apiService.updateDocumentStatus("Bearer $token", documentId, status)
+        }
+    }
+
+    suspend fun updateDocumentItems(documentId: Int, items: List<DocumentItem>, newItems: List<DocumentItem>): Result<ApiResponse<Document>> {
+        val token = tokenService.getAuthToken() ?: return Result.Failure(Exception("No token"))
+        val updateDocumentRequest = UpdateDocumentRequest(items, newItems)
+        return safeApiCall {
+            apiService.updateDocumentItems("Bearer $token", documentId, updateDocumentRequest)
         }
     }
 }
