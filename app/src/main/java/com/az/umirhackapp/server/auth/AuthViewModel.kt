@@ -85,6 +85,7 @@ class AuthViewModel(
                         if (result.exception.message?.contains("401") == true) {
                             logout()
                         }
+                        _authState.value = AuthState.Error("Не удалось загрузить пользователя")
                     }
                 }
             }
@@ -106,10 +107,16 @@ class AuthViewModel(
             val organizationToken = organizationString.substring((organizationTokenIndex + 18)..organizationString.length - 1)
 
             val request = JoinOrganizationRequest(organizationToken, organizationId)
+            println("invitationToOrganization: $request")
             viewModelScope.launch {
-                when (val result = authRepository.invitationToOrganization(token, request)) {
+                val result = authRepository.invitationToOrganization(token, request)
+                println("invitationToOrganization: $result")
+                when (result) {
                     is Result.Success -> {
-
+                        println("invitationToOrganization: ${result.data}")
+                        _authState.value = AuthState.Success(AuthResponse(
+                            success = result.data.success, message = result.data.message)
+                        )
                     }
                     is Result.Failure -> {
                         _authState.value = AuthState.Error("Не удалось присоединиться к организации")

@@ -31,9 +31,9 @@ class InventoryRepository(
         }
     }
     // Продукты
-    suspend fun getProductByBarcode(barcode: String): Result<ApiResponse<Product>> {
+    suspend fun getProductByBarcode(barcode: String, organizationId: Int?): Result<ApiResponse<Product>> {
         val token = tokenService.getAuthToken() ?: return Result.Failure(Exception("No token"))
-        return (safeApiCall { apiService.getProduct("Bearer $token", barcode) })
+        return (safeApiCall { apiService.getProduct("Bearer $token", barcode, organizationId) })
     }
 
     // Организации и склады

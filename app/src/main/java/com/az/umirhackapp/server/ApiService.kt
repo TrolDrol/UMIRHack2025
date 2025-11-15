@@ -20,17 +20,18 @@ interface ApiService {
     @GET("api/user/profile")
     suspend fun getCurrentUser(@Header("Authorization") token: String): Response<ApiResponse<User>>
 
-    @GET("api/auth/invitation/join")
+    @POST("api/auth/invitation/join")
     suspend fun invitationToOrganization(
         @Header("Authorization") token: String,
         @Body request: JoinOrganizationRequest
-    ): Response<ApiResponse<Unit>>
+    ): Response<ApiResponse<User>>
 
     // Продукты
     @GET("api/products/barcode/{barcode}")
     suspend fun getProduct(
         @Header("Authorization") token: String,
-        @Path("barcode") barcode: String
+        @Path("barcode") barcode: String,
+        @Query("organizationId") organizationId: Int?
     ): Response<ApiResponse<Product>>
 
     // Организации и склады

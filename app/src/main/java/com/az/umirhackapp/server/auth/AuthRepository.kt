@@ -37,7 +37,7 @@ class AuthRepository(private val apiService: ApiService) {
         return safeApiCall { apiService.getCurrentUser("Bearer $token") }
     }
 
-    suspend fun invitationToOrganization(token: String, request: JoinOrganizationRequest): Result<ApiResponse<Unit>> {
+    suspend fun invitationToOrganization(token: String, request: JoinOrganizationRequest): Result<ApiResponse<User>> {
         return safeApiCall { apiService.invitationToOrganization("Bearer $token", request) }
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.FlashlightOff
 import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -35,7 +36,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,6 +43,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.az.umirhackapp.server.NetworkModule
+import com.az.umirhackapp.server.auth.AuthRepository
 import com.az.umirhackapp.server.auth.AuthState
 import com.az.umirhackapp.server.auth.AuthViewModel
 import com.az.umirhackapp.server.auth.TokenService
@@ -58,7 +59,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.Boolean
 
 @Composable
 fun QRScannerScreen(
@@ -155,7 +155,7 @@ fun TopBarQRScanner(
     Row(
         Modifier
             .fillMaxWidth()
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
             .then(modifier)
             .height(78.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -166,7 +166,7 @@ fun TopBarQRScanner(
                 Icon(
                     Icons.AutoMirrored.Default.ArrowBack,
                     contentDescription = "Назад",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
         )
@@ -174,7 +174,7 @@ fun TopBarQRScanner(
             Screen.QR_SCANNER.title,
             modifier = Modifier.padding(top = 7.dp),
             style = MaterialTheme.typography.titleLarge,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }
@@ -190,7 +190,7 @@ fun BottomBarQRScanner(
         modifier = Modifier
             .then(modifier)
             .fillMaxWidth()
-            .background(Color.Black.copy(alpha = 0.7f))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -200,12 +200,16 @@ fun BottomBarQRScanner(
                 torchEnabled = !torchEnabled
                 toggleTorch(barcodeView.barcodeView, torchEnabled)
             },
-            modifier = Modifier.size(56.dp)
+            modifier = Modifier.size(56.dp),
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onBackground
+            )
         ) {
             Icon(
                 imageVector = if (torchEnabled) Icons.Default.FlashlightOn else Icons.Default.FlashlightOff,
                 contentDescription = if (torchEnabled) "Выключить фонарик" else "Включить фонарик",
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -215,7 +219,7 @@ fun BottomBarQRScanner(
         Text(
             text = if (torchEnabled) "Фонарик включен" else "Включить фонарик",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -224,7 +228,7 @@ fun BottomBarQRScanner(
         Text(
             text = "Наведите камеру на QR или штрих-код",
             style = MaterialTheme.typography.bodyLarge,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         // Последний отсканированный код
@@ -233,7 +237,7 @@ fun BottomBarQRScanner(
             Text(
                 text = "Сканировано: ${lastScannedCode.take(30)}...",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
     }
@@ -264,7 +268,6 @@ fun CameraScanner(
                     decodeContinuous { result ->
                         result?.text?.let { scannedText ->
                             if (scanEnabled.value) {
-                                println(scanEnabled.toString())
                                 lastScannedCode.value = scannedText
                                 scanEnabled.value = false
 
@@ -313,12 +316,16 @@ fun PreviewQRScannerScreen() {
     val inventoryRepository = InventoryRepository(NetworkModule.apiService, tokenService)
     val inventoryViewModel = viewModel { InventoryViewModel(inventoryRepository) }
 
+    val authRepository = AuthRepository(NetworkModule.apiService)
+    val authViewModel = viewModel { AuthViewModel(authRepository, tokenService) }
+
     AppTheme {
         QRScannerScreen(
+            authViewModel = authViewModel,
             onBackClick = {
             },
             onCodeScanned = { barcode ->
-                inventoryViewModel.scanProduct(barcode, {  })
+                inventoryViewModel.scanProduct(barcode, null, {  })
             },
             onNotPermissionCamera = {
             }

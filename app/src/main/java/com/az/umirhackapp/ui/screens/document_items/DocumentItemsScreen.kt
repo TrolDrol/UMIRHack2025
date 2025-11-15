@@ -77,22 +77,37 @@ fun DocumentItemsScreen(
     LaunchedEffect(scannedProduct) {
         scannedProduct?.let { product ->
             val itemIndex = documentItems.value.indexOfFirst { it.productId == product.id }
-            if (itemIndex == -1) {
+            val newItemIndex = newDocumentItems.value.indexOfFirst { it.productId == product.id }
+            if (itemIndex == -1 && newItemIndex == -1) {
                 newDocumentItem.value = DocumentItem(
                     0, selectedDocumentState.id, product.id, 0.0, 1.0, product
                 )
                 showAddNewItemToDocumentDialog = true
             } else {
-                val updatedItems = documentItems.value.toMutableList()
-                val oldItem = updatedItems[itemIndex]
+                if (itemIndex != -1) {
+                    val updatedItems = documentItems.value.toMutableList()
+                    val oldItem = updatedItems[itemIndex]
 
-                val updatedItem = oldItem.copy(
-                    product = product,
-                    quantityActual = oldItem.quantityActual + 1.0
-                )
+                    val updatedItem = oldItem.copy(
+                        product = product,
+                        quantityActual = oldItem.quantityActual + 1.0
+                    )
 
-                updatedItems[itemIndex] = updatedItem
-                documentItems.value = updatedItems
+                    updatedItems[itemIndex] = updatedItem
+                    documentItems.value = updatedItems
+                }
+                if (newItemIndex != -1) {
+                    val newUpdatedItems = newDocumentItems.value.toMutableList()
+                    val oldItem = newUpdatedItems[newItemIndex]
+
+                    val newUpdatedItem = oldItem.copy(
+                        product = product,
+                        quantityActual = oldItem.quantityActual + 1.0
+                    )
+
+                    newUpdatedItems[newItemIndex] = newUpdatedItem
+                    newDocumentItems.value = newUpdatedItems
+                }
             }
         }
         viewModel.clearScannedProduct()
@@ -124,6 +139,7 @@ fun DocumentItemsScreen(
                         if (0.9 > visibilityScaffold.floatValue)
                             viewModel.scanProduct(
                                 barcode,
+                                selectedDocumentState.organizationId,
                                 {showNotExistProductDialog = true}
                             )
                     }

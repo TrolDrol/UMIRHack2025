@@ -136,6 +136,7 @@ fun AppNavigation(systemInDarkTheme: MutableState<Boolean>) {
             RegistrationScreen(
                 authViewModel = authViewModel,
                 onRegisterSuccess = {
+                    authViewModel.loadCurrentUser()
                     navController.navigate(Screen.MAIN_ORGANIZATIONS.route) {
                         popUpTo(Screen.REGISTRATION.route) { inclusive = true }
                     }
@@ -152,7 +153,7 @@ fun AppNavigation(systemInDarkTheme: MutableState<Boolean>) {
             LoginScreen(
                 authViewModel = authViewModel,
                 onLoginSuccess = {
-                    // Успешный вход - переходим на главный экран
+                    authViewModel.loadCurrentUser()
                     navController.navigate(Screen.MAIN_ORGANIZATIONS.route) {
                         popUpTo(Screen.LOGIN.route) { inclusive = true }
                     }
@@ -248,8 +249,8 @@ fun AppNavigation(systemInDarkTheme: MutableState<Boolean>) {
                 onBackClick = { navController.popBackStack() },
                 loadContent = {
                     inventoryViewModel.loadDocuments(
-                        inventoryViewModel.uiState.value.selectedOrganization!!.id,
-                        inventoryViewModel.uiState.value.selectedWarehouse!!.id
+                        inventoryViewModel.uiState.value.selectedOrganization?.id ?: return@MainScreen,
+                        inventoryViewModel.uiState.value.selectedWarehouse?.id ?: return@MainScreen
                     )
                 },
                 systemInDarkTheme = systemInDarkTheme.value,
@@ -339,6 +340,7 @@ fun AppNavigation(systemInDarkTheme: MutableState<Boolean>) {
                     navController.popBackStack()
                 },
                 onCodeScanned = { barcode ->
+                    println("QRScannerScreen: $barcode")
                     authViewModel.invitationToOrganization(barcode)
                 },
                 onNotPermissionCamera = {

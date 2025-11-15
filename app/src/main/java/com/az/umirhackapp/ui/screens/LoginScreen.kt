@@ -57,7 +57,6 @@ fun LoginScreen(
     val snackBarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Обработка состояния аутентификации
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Success -> {

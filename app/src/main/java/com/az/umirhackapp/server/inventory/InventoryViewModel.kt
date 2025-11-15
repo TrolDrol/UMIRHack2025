@@ -61,10 +61,10 @@ class InventoryViewModel(
     }
 
     // Сканирование продукта
-    fun scanProduct(barcode: String, onNotExistProduct: () -> Unit) {
+    fun scanProduct(barcode: String, organizationId: Int?, onNotExistProduct: () -> Unit) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            when (val result = repository.getProductByBarcode(barcode)) {
+            when (val result = repository.getProductByBarcode(barcode, organizationId)) {
                 is Result.Success -> {
                     _scannedProduct.value = result.data.data
                     _uiState.value = _uiState.value.copy(error = null)
