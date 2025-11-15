@@ -15,7 +15,7 @@ fun OnBackClickDocumentItemsScreenDialog(
         onDismissRequest = onDismiss,
         title = { Text("Выйти из документа?") },
         text = {
-            Text("При выходе из документа все действия, которые вы с ним произвели аннулируются\n" +
+            Text("При выходе из документа все действия, которые вы с ним произвели сохранятся\n" +
                     "Вы уверены что хотите выйти?")
         },
         confirmButton = {
